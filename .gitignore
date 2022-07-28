@@ -1,0 +1,26 @@
+# Default ignored files
+*/shelf/
+*/workspace.xml
+*/.idea/
+*/.vscode/
+
+# Text editor backups #
+#######################
+*~
+*.pyc
+*.pyo
+
+# Misc. #
+#########
+*/private/
+*/.ipynb_checkpoints/
+*/__pycache__/
+*/notebooks/
+*.pytest_cache/
+*.xml
+*scratch.ipynb
+
+# Large files #
+###############
+*.pt
+*.zip
