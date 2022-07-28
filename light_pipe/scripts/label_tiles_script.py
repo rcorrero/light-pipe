@@ -3,7 +3,7 @@ from ..utils import load_from_pkl, save_to_pkl
 
 
 def main():
-    tracker_path = '../../data/planet_scope_2/tracker.pkl'
+    tracker_path = '~/data/planet_scope/ninheira_dataset_224/tracker.pkl'
     tracker = load_from_pkl(tracker_path)
 
     # Make transformer
@@ -14,7 +14,7 @@ def main():
     output_tracker = raster_labeler.transform(input=tracker, 
                                               output=output_tracker, 
                                               depth_first=False)
-    output_tracker_path = '../../data/planet_scope_2/tracker_labeled.pkl'
+    output_tracker_path = '~/data/planet_scope/ninheira_dataset_224/tracker_labeled.pkl'
     save_to_pkl(output_tracker, output_tracker_path)
 
 
