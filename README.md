@@ -1,4 +1,4 @@
-# [Light-Pipe](www.light-pipe.io)
+# Light-Pipe
 
 ---
 
