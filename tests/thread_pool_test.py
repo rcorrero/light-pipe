@@ -15,7 +15,7 @@ from .single_thread_test import process_array_cpu
 np.random.seed(RANDOM_SEED)
 
 
-@threading_utils.run_as_coro
+@threading_utils.make_coro
 def process_array_coro(*args, **kwargs):
     return process_array_cpu(*args, **kwargs)
 

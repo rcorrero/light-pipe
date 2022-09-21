@@ -90,12 +90,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 &#34;&#34;&#34;Web mercator XYZ tile utilities&#34;&#34;&#34;
 
-from collections import namedtuple
-from functools import reduce
 import math
+import operator
 import sys
 import warnings
-import operator
+from collections import namedtuple
+from functools import reduce
 
 if sys.version_info &lt; (3,):
     warnings.warn(

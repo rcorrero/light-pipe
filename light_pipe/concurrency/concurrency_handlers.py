@@ -9,7 +9,7 @@ manner.
 
 
 import concurrent.futures
-from typing import Callable, Generator, Iterable, Tuple, Optional
+from typing import Callable, Generator, Iterable, Optional, Tuple
 
 
 class ConcurrencyHandler:
@@ -81,6 +81,10 @@ class ProcessPoolHandler(ConcurrencyHandler):
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None
     ):
+        # @TODO: IMPLEMENT:
+        # Checks must be put in place to ensure that inputs and outputs are
+        # serializable. This means no SWIG objects and no generators.
+        raise NotImplementedError("This class is not implemented.")
         if executor is None:
             assert max_workers is not None, \
                 "`max_workers` must be set if `executor` is not passed."
@@ -96,6 +100,8 @@ class ProcessPoolHandler(ConcurrencyHandler):
             executor = self.executor
         if max_workers is None:
             max_workers = self.max_workers
+
+        kwargs['make_pickleable'] = True
 
         if executor is not None:
             futures = [

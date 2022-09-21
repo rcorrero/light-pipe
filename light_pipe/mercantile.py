@@ -33,12 +33,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 """Web mercator XYZ tile utilities"""
 
-from collections import namedtuple
-from functools import reduce
 import math
+import operator
 import sys
 import warnings
-import operator
+from collections import namedtuple
+from functools import reduce
 
 if sys.version_info < (3,):
     warnings.warn(

@@ -19,10 +19,6 @@ ogr.UseExceptions()
 osr.UseExceptions()
 
 
-# def convert_shapefile_to_geojson(geojson_path: str, shp_path: str) -> None:
-#     gdal.VectorTranslate(geojson_path, shp_path, format="GeoJSON")
-
-
 def translate_dataset(
     dataset: gdal.Dataset, filepath: str, raster_x_size: int,
     raster_y_size: int, n_bands: int, dtype, geotransform, projection, driver_name,
@@ -71,6 +67,7 @@ def rasterize_datasources(
     in_memory: Optional[bool] = True, out_dtype=gdal.GDT_Byte, out_bands = [1], 
     out_dir = None, filepath_generator: Optional[Callable] = None, *args, **kwargs
 ):
+    metadata = {**kwargs, "args":args}
     out_n_bands = len(out_bands)
     item_filepath = dataset.GetDescription()
     item_uid = os.path.basename(item_filepath)
@@ -109,95 +106,9 @@ def rasterize_datasources(
 
         datasets.append(out_dataset)
         yield item_uid, (out_dataset, True, kwargs)
-    yield item_uid, (dataset, False, kwargs)
+    yield item_uid, (dataset, False, metadata)
 
 
-# def rasterize_vector_files(
-#     datasets: Union[gdal.Dataset, List[gdal.Dataset]], datasources: List[ogr.DataSource],
-#     manifest_dict: dict, *args, **kwargs
-# ) -> dict:
-#     try:
-#         iter(datasets)
-#     except TypeError:
-#         assert isinstance(datasets, gdal.Dataset), \
-#             "No datasets passed."
-#         datasets = [datasets]
-#     datasets, datasources, manifest_dict = rasterize_datasources(
-#         datasets=datasets, datasources=datasources, manifest_dict=manifest_dict,
-#         *args, **kwargs
-#     )
-#     return datasets, datasources, manifest_dict
-
-
-# # @gdal_data_handlers.close_data
-# def make_north_up_dataset_from_tiles_like(
-#     datasets: List[gdal.Dataset], tiles: np.ndarray, tile_y: int, 
-#     tile_x: int, row_major = False, use_ancestor_pixel_size = False, 
-#     pixel_x_size = None, pixel_y_size = None, n_bands = 1, 
-#     dtype = gdal.GDT_Byte, out_dir = None, assert_north_up: Optional[bool] = True,
-#     *args, **kwargs
-# ) -> Tuple[List[gdal.Dataset], gdal.Dataset]:
-#     def write_tiles_to_dataset(
-#         dataset: gdal.Dataset, tiles: np.ndarray, out_raster_y_size: int,
-#         out_raster_x_size: int, row_major = False, *args, **kwargs
-#     ) -> gdal.Dataset:
-#         if row_major:
-#             tiles = tiles.reshape(out_raster_y_size, out_raster_x_size)
-#         else:
-#             tiles = tiles.reshape(out_raster_x_size, out_raster_y_size).T
-#         dataset = raster_io.write_array_to_dataset(tiles, dataset)
-#         return dataset
-
-
-#     if use_ancestor_pixel_size:
-#         gt_0, pixel_x_size, gt_2, gt_3, gt_4, pixel_y_size = datasets[0].GetGeoTransform()
-#         if assert_north_up:
-#             filepath = datasets[0].GetDescription()
-#             assert abs(gt_2) <= 1e-16 and (gt_4) <= 1e-16, \
-#                 f"Transformation coefficients are not equal to zero for dataset {filepath}."
-#     else:
-#         assert pixel_y_size is not None
-#         assert pixel_x_size is not None
-#         gt_0, _, _, gt_3, _, _ = datasets[0].GetGeoTransform()
-#     out_projection = datasets[0].GetProjection()
-#     out_geotransform = (
-#         gt_0, tile_x * pixel_x_size, 0.0, gt_3, 0.0, tile_y * pixel_y_size
-#     )
-#     out_driver = datasets[0].GetDriver()
-
-#     raster_y = datasets[0].RasterYSize
-#     raster_x = datasets[0].RasterXSize
-
-#     padded_y = raster_utils.round_up(raster_y, tile_y)
-#     padded_x = raster_utils.round_up(raster_x, tile_x)
-#     out_raster_y_size = padded_y // tile_y
-#     out_raster_x_size = padded_x // tile_x
-
-#     out_dataset_uid = raster_utils.get_uid()
-
-#     ancestor_filepath = datasets[0].GetDescription()
-#     out_filepath = raster_io.get_descendant_filepath(
-#         ancestor_filepath, out_dataset_uid, out_dir
-#     )
-
-#     out_dataset = raster_io.make_dataset(
-#         out_driver, out_filepath, out_raster_x_size, out_raster_y_size, n_bands,
-#         dtype, out_geotransform, out_projection
-#     )
-#     out_dataset = raster_io.add_uid_to_metadata(out_dataset, out_dataset_uid)
-
-#     for ancestor_dataset in datasets:
-#         ancestor_dataset, out_dataset = raster_io.add_ancestor_reference_to_descendant_metadata(
-#             ancestor_dataset, out_dataset
-#         )
-
-#     out_dataset = write_tiles_to_dataset(
-#         out_dataset, tiles, out_raster_y_size, out_raster_x_size, row_major
-#     )
-#     return datasets, out_dataset
-
-
-# @gdal_data_handlers.close_data
 def make_north_up_dataset_from_tiles_like(
     datasets: List[gdal.Dataset], filepath: str, tiles: np.ndarray, tile_y: int, 
     tile_x: int, row_major = False, use_ancestor_pixel_size = False, 

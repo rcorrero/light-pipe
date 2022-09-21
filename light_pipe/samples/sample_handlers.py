@@ -9,7 +9,7 @@ of a specific type. This operation is defined in the `make_samples` method.
 
 from typing import Callable, Generator, Iterable, Optional
 
-from light_pipe import gridding, raster_trans
+from light_pipe import gdal_data_handlers, gridding, raster_trans
 from light_pipe.concurrency import concurrency_handlers
 from light_pipe.samples import sample
 
@@ -34,11 +34,15 @@ class SampleHandler:
 
         self.in_memory = in_memory
 
-
-    @classmethod
-    def fork_fn(cls, iterable_kwargs, *args, **kwargs):
-        kwargs = {**iterable_kwargs, **kwargs}
+    @staticmethod
+    @gdal_data_handlers.open_data
+    def _rasterize_datasources(*args, **kwargs):
         return raster_trans.rasterize_datasources(*args, **kwargs)
+
+
+    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+        kwargs = {**kwargs, **iterable_kwargs}
+        return self._rasterize_datasources(*args, **kwargs)
 
 
     def make_samples(
@@ -49,7 +53,7 @@ class SampleHandler:
             in_memory = self.in_memory
         
         results = self.join(self.fork(
-            self.fork_fn, iterable, in_memory=in_memory, *args, **kwargs
+            self._fork_fn, iterable, in_memory=in_memory, *args, **kwargs
         ))
         for result in results:
             uid, data_tuples = result
@@ -62,10 +66,15 @@ class SampleHandler:
         
     
 class GridSampleHandler(SampleHandler):
-    @classmethod
-    def fork_fn(cls, iterable_kwargs, *args, **kwargs):
-        kwargs = {**iterable_kwargs, **kwargs}
+    @staticmethod
+    @gdal_data_handlers.open_data
+    def _make_grid_cell_datasets(*args, **kwargs):
         return gridding.make_grid_cell_datasets(*args, **kwargs)
+
+
+    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+        kwargs = {**kwargs, **iterable_kwargs}
+        return self._make_grid_cell_datasets(*args, **kwargs)
 
 
     def make_samples(
@@ -77,7 +86,7 @@ class GridSampleHandler(SampleHandler):
             in_memory = self.in_memory
         
         results = self.join(self.fork(
-            self.fork_fn, iterable, zoom=zoom,
+            self._fork_fn, iterable, zoom=zoom,
             in_memory=in_memory, *args, **kwargs
         ))
         for result in results:

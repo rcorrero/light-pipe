@@ -4,15 +4,15 @@
 
 ## Overview
 
-Light-Pipe is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Command-line utilities are provided for all of the core library functions, along with a Python API for developers.
+Light-Pipe is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Command-line utilities are provided for all of the core library functions, along with a Python API for developers. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
-Light-Pipe has one non-standard Python dependency, the [`osgeo`](https://gdal.org/) library, which is released under an MIT style Open Source License by [The Open Source Geospatial Foundation](https://www.osgeo.org/), to whom I owe a massive debt of gratitude.
+Light-Pipe has one non-standard Python dependency, the [`osgeo`](https://gdal.org/) library, which is released under an MIT style Open Source License by [The Open Source Geospatial Foundation](https://www.osgeo.org/).
 
 ## Python API Guidelines
 
 The following is a list of guidelines which this package follows:
 
-1. Light-Pipe presents an abstract data model to the user, the `LightPipeSample`, along with `LightPipeline`, a class which is used to produce `LightPipeSample` instances from user-provided geospatial data. `LightPipeline` preprocesses the supplied data to prepare `LightPipeSamples`, instances which are analysis-ready.
+1. Light-Pipe presents an abstract data model to the user, the `LightPipeSample`, along with `LightPipeline`, a class which is used to produce `LightPipeSample` instances from user-provided geospatial data. `LightPipeline` preprocesses the supplied data to prepare `LightPipeSample` instances which are analysis-ready.
 
 2. Light-Pipe is designed from the ground-up to support concurrency in the form of multi-threading, parallelism in the form of multi-processing, and parallelism across multiple machines. This means that all data preprocessing may be scaled arbitrarily to meet the needs of users. The software guarantees that all multi-threaded operations are thread-safe. All supported concurrency modes may be used with each sample type.
 

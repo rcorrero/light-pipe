@@ -21,20 +21,6 @@ def round_up(n: int, base: int) -> int:
     return int(n + (base - n) % base)
 
 
-# # Adapted from: https://stackoverflow.com/a/1213943
-# # Credit: stackoverflow user mluebke
-# def get_uid(multiplier: int = 100000000000, *args, **kwargs):
-#     """
-#     Generates a universally unique ID.
-#     Any arguments only create more randomness.
-#     """
-#     t = int(time.time() * multiplier)
-#     r = int(random.random() * multiplier)
-#     data = f"{t} {r} {args}"
-#     uid = hashlib.md5(data.encode()).hexdigest()
-#     return uid
-
-
 def get_tile_id_mapping(
     raster_y: int, raster_x: int, tile_y: int, tile_x: int, row_major=False,
     assert_evenly_divisble = True, *args, **kwargs
@@ -155,14 +141,22 @@ def get_padded_array_from_multiple_datasets(
 def get_tiles(
     datasets: List[gdal.Dataset], labels: List[bool], tile_y: int, 
     tile_x: int, array_dtype, row_major: bool, 
-    tile_coords = None, shuffle_tiles: Optional[bool] = False, *args, **kwargs
+    tile_coords = None, shuffle_tiles: Optional[bool] = False, 
+    assert_tile_smaller_than_raster: Optional[bool] = False,
+    *args, **kwargs
 ):
     datasets, padded, band_map = get_padded_array_from_multiple_datasets(
         datasets, labels, tile_y, tile_x, array_dtype, **kwargs
     )
+    raster_y = padded.shape[-2]
+    raster_x = padded.shape[-1]
+    if assert_tile_smaller_than_raster:
+        assert tile_y < raster_y, \
+            f"Tile y size {tile_y} is larger than raster y size."
+        assert tile_x < raster_x, \
+            f"Tile x size {tile_x} is larger than raster x size."
     if tile_coords is None:
-        raster_y = padded.shape[-2]
-        raster_x = padded.shape[-1]
+
         tile_coords = get_tile_id_mapping(
             raster_y, raster_x, tile_y, tile_x, row_major, 
             assert_evenly_divisble=True

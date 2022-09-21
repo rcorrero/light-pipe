@@ -50,24 +50,6 @@ def make_worker(f):
     return worker_wrapper
 
 
-# async def get_future_result(future: concurrent.futures.Future):
-#     res = future.result()
-#     return res
-
-
-# def make_coro(f):
-#     @functools.wraps(f)
-#     async def make_coro_wrapper(
-#         executor: concurrent.futures.ThreadPoolExecutor, *args, **kwargs
-#     ):
-#         future = executor.submit(
-#             f, *args, **kwargs
-#         )
-#         res = await get_future_result(future)
-#         return res
-#     return make_coro_wrapper
-
-
 def make_coro(f):
     @functools.wraps(f)
     def make_coro_wrapper(
