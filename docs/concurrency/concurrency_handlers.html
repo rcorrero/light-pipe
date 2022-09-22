@@ -52,6 +52,7 @@ class ConcurrencyHandler:
             f(item, *args, **kwargs) for item in iterable
         ]
         yield from results
+        # return results
 
 
     @classmethod
@@ -71,6 +72,7 @@ class ConcurrencyHandler:
                 else:
                     results[key] = [value]
         yield from results.items()
+        # return results
 
 
 class ThreadPoolHandler(ConcurrencyHandler):
@@ -117,7 +119,6 @@ class ProcessPoolHandler(ConcurrencyHandler):
         # @TODO: IMPLEMENT:
         # Checks must be put in place to ensure that inputs and outputs are
         # serializable. This means no SWIG objects and no generators.
-        raise NotImplementedError(&#34;This class is not implemented.&#34;)
         if executor is None:
             assert max_workers is not None, \
                 &#34;`max_workers` must be set if `executor` is not passed.&#34;
@@ -176,6 +177,7 @@ class ProcessPoolHandler(ConcurrencyHandler):
             f(item, *args, **kwargs) for item in iterable
         ]
         yield from results
+        # return results
 
 
     @classmethod
@@ -194,7 +196,8 @@ class ProcessPoolHandler(ConcurrencyHandler):
                     results[key].append(value)
                 else:
                     results[key] = [value]
-        yield from results.items()</code></pre>
+        yield from results.items()
+        # return results</code></pre>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">
@@ -217,7 +220,8 @@ def fork(cls, f: Callable, iterable: Iterable, *args, **kwargs) -&gt; Generator:
     results = [
         f(item, *args, **kwargs) for item in iterable
     ]
-    yield from results</code></pre>
+    yield from results
+    # return results</code></pre>
 </details>
 </dd>
 <dt id="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.join"><code class="name flex">
@@ -245,7 +249,8 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
                 results[key].append(value)
             else:
                 results[key] = [value]
-    yield from results.items()</code></pre>
+    yield from results.items()
+    # return results</code></pre>
 </details>
 </dd>
 </dl>
@@ -268,7 +273,6 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
         # @TODO: IMPLEMENT:
         # Checks must be put in place to ensure that inputs and outputs are
         # serializable. This means no SWIG objects and no generators.
-        raise NotImplementedError(&#34;This class is not implemented.&#34;)
         if executor is None:
             assert max_workers is not None, \
                 &#34;`max_workers` must be set if `executor` is not passed.&#34;

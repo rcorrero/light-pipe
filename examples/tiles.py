@@ -1,5 +1,5 @@
 import numpy as np
-from light_pipe.samples import sample
+from light_pipe import processing
 from osgeo import gdal, ogr
 
 gdal.UseExceptions()
@@ -21,7 +21,7 @@ def main():
     inputs = [ds, [ds], [ds, ds], [ds, ds, ds]]
 
     for sample_id, datasets in enumerate(inputs):
-        lp_sample = sample.LightPipeSample(uid=sample_id, data=datasets)
+        lp_sample = processing.LightPipeSample(uid=sample_id, data=datasets)
         tiles = lp_sample.tile()
         preds = list()
         for tile in tiles:

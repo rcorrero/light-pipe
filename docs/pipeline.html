@@ -24,8 +24,8 @@ API of this package and the primary method through which the user …" />
 </header>
 <section id="section-intro">
 <p>This module contains the definition of <code><a title="light_pipe.pipeline.LightPipeline" href="#light_pipe.pipeline.LightPipeline">LightPipeline</a></code>, a key component of the
-API of this package and the primary method through which the user creates
-samples.</p>
+API of this package and the primary method through which the user performs
+operations on data and creates samples.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -34,67 +34,73 @@ samples.</p>
 
 __doc__ = &#34;&#34;&#34;
 This module contains the definition of `LightPipeline`, a key component of the
-API of this package and the primary method through which the user creates 
-samples.
+API of this package and the primary method through which the user performs
+operations on data and creates samples.
 &#34;&#34;&#34;
 
 
-from typing import Iterable, Optional
+from typing import Generator, Iterable, Optional, Sequence
 
-from light_pipe.concurrency import concurrency_handlers
-from light_pipe.samples import sample, sample_handlers
+from light_pipe import concurrency, processing
 
 
 class LightPipeline:
     def __init__(
         self, inputs: Optional[Iterable] = None,
-        concurrency_handler: Optional[concurrency_handlers.ConcurrencyHandler] = None,
-        sample_handler: Optional[sample_handlers.SampleHandler] = None,
+        processors: Optional[Sequence[processing.SampleProcessor]] = None,
+        concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
         blocking: Optional[bool] = False, in_memory: Optional[bool] = True
     ):
-        self.inputs = inputs
-        if concurrency_handler is not None and sample_handler is not None:
-            self.sample_handler = sample_handler(concurrency_handler)
-        if concurrency_handler is None:
-            concurrency_handler = concurrency_handlers.ConcurrencyHandler()
-        if sample_handler is None:
-            sample_handler = sample_handlers.SampleHandler(
-                concurrency_handler, in_memory=in_memory
-            )
+        self.inputs = inputs       
+        if processors is None:
+            processors = [processing.SampleMaker()]
+        if concurrency_handler is not None:
+            for processor in processors:
+                processor.set_concurrency(concurrency_handler=concurrency_handler)
+        self.processors = processors
         self.concurrency_handler = concurrency_handler
-        self.sample_handler = sample_handler
         self.blocking = blocking
         self.in_memory = in_memory
-        self.samples = None
+    
+        self._results = None
+        self._i = None
+        self._n = None
 
 
     def run(
-        self, iterable: Optional[Iterable] = None, blocking: Optional[bool] = None,
-        in_memory: Optional[bool] = None, *args, **kwargs
+        self, iterable: Optional[Iterable] = None, 
+        processors: Optional[Sequence[processing.SampleProcessor]] = None,
+        blocking: Optional[bool] = None, in_memory: Optional[bool] = None, 
+        *args, **kwargs
     ):
         if iterable is None:
             iterable = self.inputs
             assert iterable is not None, &#34;Parameter `iterable` not set.&#34;
+        if processors is None:
+            processors = self.processors
         if blocking is None:
             blocking = self.blocking
         if in_memory is None:
             in_memory = self.in_memory
-        samples = self.sample_handler.make_samples(
-            iterable=iterable, in_memory=in_memory, *args, **kwargs
-        )
+        for processor in processors:
+            iterable = processor.run(iterable, in_memory=in_memory, *args, **kwargs)
         if blocking:
-            samples_list = list()
-            for sample in samples:
-                samples_list.append(sample)
-                samples = samples_list
-        self.samples = samples
-        return self
+            results_list = list()
+            for item in iterable:
+                results_list.append(item)
+            results = results_list
+            self._i = 0 # Reset each time `run` is called.
+            self._n = len(results)
+        else:
+            results = iterable
+        self._results = results
+        return results
 
 
     def __iter__(self):
-        if self.samples is None:
+        if self._results is None:
             self.run()
-            assert self.samples is not None
+            assert self._results is not None
         return self
 
 
@@ -102,9 +108,21 @@ class LightPipeline:
         return self.next()
 
 
-    def next(self) -&gt; sample.LightPipeSample:
-        sample = next(self.samples)
-        return sample</code></pre>
+    def next(self):
+        if self._results is None:
+            self.run()
+            assert self._results is not None
+        if isinstance(self._results, Generator):
+            item = next(self._results)
+        else:
+            i = self._i
+            n = self._n
+            if i &lt; n:
+                item = self._results[i]
+                self._i += 1
+            else:
+                raise StopIteration
+        return item</code></pre>
 </details>
 </section>
 <section>
@@ -118,7 +136,7 @@ class LightPipeline:
 <dl>
 <dt id="light_pipe.pipeline.LightPipeline"><code class="flex name class">
 <span>class <span class="ident">LightPipeline</span></span>
-<span>(</span><span>inputs: Optional[Iterable] = None, concurrency_handler: Optional[<a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="concurrency/concurrency_handlers.html#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a>] = None, sample_handler: Optional[<a title="light_pipe.samples.sample_handlers.SampleHandler" href="samples/sample_handlers.html#light_pipe.samples.sample_handlers.SampleHandler">SampleHandler</a>] = None, blocking: Optional[bool] = False, in_memory: Optional[bool] = True)</span>
+<span>(</span><span>inputs: Optional[Iterable] = None, processors: Optional[Sequence[<a title="light_pipe.processing.sample_handlers.SampleProcessor" href="processing/sample_handlers.html#light_pipe.processing.sample_handlers.SampleProcessor">SampleProcessor</a>]] = None, concurrency_handler: Optional[<a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="concurrency/concurrency_handlers.html#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a>] = None, blocking: Optional[bool] = False, in_memory: Optional[bool] = True)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -129,53 +147,60 @@ class LightPipeline:
 <pre><code class="python">class LightPipeline:
     def __init__(
         self, inputs: Optional[Iterable] = None,
-        concurrency_handler: Optional[concurrency_handlers.ConcurrencyHandler] = None,
-        sample_handler: Optional[sample_handlers.SampleHandler] = None,
+        processors: Optional[Sequence[processing.SampleProcessor]] = None,
+        concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
         blocking: Optional[bool] = False, in_memory: Optional[bool] = True
     ):
-        self.inputs = inputs
-        if concurrency_handler is not None and sample_handler is not None:
-            self.sample_handler = sample_handler(concurrency_handler)
-        if concurrency_handler is None:
-            concurrency_handler = concurrency_handlers.ConcurrencyHandler()
-        if sample_handler is None:
-            sample_handler = sample_handlers.SampleHandler(
-                concurrency_handler, in_memory=in_memory
-            )
+        self.inputs = inputs       
+        if processors is None:
+            processors = [processing.SampleMaker()]
+        if concurrency_handler is not None:
+            for processor in processors:
+                processor.set_concurrency(concurrency_handler=concurrency_handler)
+        self.processors = processors
         self.concurrency_handler = concurrency_handler
-        self.sample_handler = sample_handler
         self.blocking = blocking
         self.in_memory = in_memory
-        self.samples = None
+    
+        self._results = None
+        self._i = None
+        self._n = None
 
 
     def run(
-        self, iterable: Optional[Iterable] = None, blocking: Optional[bool] = None,
-        in_memory: Optional[bool] = None, *args, **kwargs
+        self, iterable: Optional[Iterable] = None, 
+        processors: Optional[Sequence[processing.SampleProcessor]] = None,
+        blocking: Optional[bool] = None, in_memory: Optional[bool] = None, 
+        *args, **kwargs
     ):
         if iterable is None:
             iterable = self.inputs
             assert iterable is not None, &#34;Parameter `iterable` not set.&#34;
+        if processors is None:
+            processors = self.processors
         if blocking is None:
             blocking = self.blocking
         if in_memory is None:
             in_memory = self.in_memory
-        samples = self.sample_handler.make_samples(
-            iterable=iterable, in_memory=in_memory, *args, **kwargs
-        )
+        for processor in processors:
+            iterable = processor.run(iterable, in_memory=in_memory, *args, **kwargs)
         if blocking:
-            samples_list = list()
-            for sample in samples:
-                samples_list.append(sample)
-                samples = samples_list
-        self.samples = samples
-        return self
+            results_list = list()
+            for item in iterable:
+                results_list.append(item)
+            results = results_list
+            self._i = 0 # Reset each time `run` is called.
+            self._n = len(results)
+        else:
+            results = iterable
+        self._results = results
+        return results
 
 
     def __iter__(self):
-        if self.samples is None:
+        if self._results is None:
             self.run()
-            assert self.samples is not None
+            assert self._results is not None
         return self
 
 
@@ -183,14 +208,26 @@ class LightPipeline:
         return self.next()
 
 
-    def next(self) -&gt; sample.LightPipeSample:
-        sample = next(self.samples)
-        return sample</code></pre>
+    def next(self):
+        if self._results is None:
+            self.run()
+            assert self._results is not None
+        if isinstance(self._results, Generator):
+            item = next(self._results)
+        else:
+            i = self._i
+            n = self._n
+            if i &lt; n:
+                item = self._results[i]
+                self._i += 1
+            else:
+                raise StopIteration
+        return item</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
 <dt id="light_pipe.pipeline.LightPipeline.next"><code class="name flex">
-<span>def <span class="ident">next</span></span>(<span>self) ‑> <a title="light_pipe.samples.sample.LightPipeSample" href="samples/sample.html#light_pipe.samples.sample.LightPipeSample">LightPipeSample</a></span>
+<span>def <span class="ident">next</span></span>(<span>self)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -198,13 +235,25 @@ class LightPipeline:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def next(self) -&gt; sample.LightPipeSample:
-    sample = next(self.samples)
-    return sample</code></pre>
+<pre><code class="python">def next(self):
+    if self._results is None:
+        self.run()
+        assert self._results is not None
+    if isinstance(self._results, Generator):
+        item = next(self._results)
+    else:
+        i = self._i
+        n = self._n
+        if i &lt; n:
+            item = self._results[i]
+            self._i += 1
+        else:
+            raise StopIteration
+    return item</code></pre>
 </details>
 </dd>
 <dt id="light_pipe.pipeline.LightPipeline.run"><code class="name flex">
-<span>def <span class="ident">run</span></span>(<span>self, iterable: Optional[Iterable] = None, blocking: Optional[bool] = None, in_memory: Optional[bool] = None, *args, **kwargs)</span>
+<span>def <span class="ident">run</span></span>(<span>self, iterable: Optional[Iterable] = None, processors: Optional[Sequence[<a title="light_pipe.processing.sample_handlers.SampleProcessor" href="processing/sample_handlers.html#light_pipe.processing.sample_handlers.SampleProcessor">SampleProcessor</a>]] = None, blocking: Optional[bool] = None, in_memory: Optional[bool] = None, *args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -213,26 +262,33 @@ class LightPipeline:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def run(
-    self, iterable: Optional[Iterable] = None, blocking: Optional[bool] = None,
-    in_memory: Optional[bool] = None, *args, **kwargs
+    self, iterable: Optional[Iterable] = None, 
+    processors: Optional[Sequence[processing.SampleProcessor]] = None,
+    blocking: Optional[bool] = None, in_memory: Optional[bool] = None, 
+    *args, **kwargs
 ):
     if iterable is None:
         iterable = self.inputs
         assert iterable is not None, &#34;Parameter `iterable` not set.&#34;
+    if processors is None:
+        processors = self.processors
     if blocking is None:
         blocking = self.blocking
     if in_memory is None:
         in_memory = self.in_memory
-    samples = self.sample_handler.make_samples(
-        iterable=iterable, in_memory=in_memory, *args, **kwargs
-    )
+    for processor in processors:
+        iterable = processor.run(iterable, in_memory=in_memory, *args, **kwargs)
     if blocking:
-        samples_list = list()
-        for sample in samples:
-            samples_list.append(sample)
-            samples = samples_list
-    self.samples = samples
-    return self</code></pre>
+        results_list = list()
+        for item in iterable:
+            results_list.append(item)
+        results = results_list
+        self._i = 0 # Reset each time `run` is called.
+        self._n = len(results)
+    else:
+        results = iterable
+    self._results = results
+    return results</code></pre>
 </details>
 </dd>
 </dl>

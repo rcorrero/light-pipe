@@ -17,14 +17,6 @@ def get_savepath(uid) -> str:
 
 
 def main():
-    # ds = gdal.Open('./data/image.tif')
-    # ds2 = ogr.Open('./data/label/label.shp')
-    # inputs = [
-    #     {
-    #         'dataset': ds,
-    #         'datasources': [ds2]
-    #     },
-    # ]
     inputs = [
         {
             'dataset': './data/image.tif',

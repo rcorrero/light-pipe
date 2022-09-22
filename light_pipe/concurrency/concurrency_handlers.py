@@ -19,6 +19,7 @@ class ConcurrencyHandler:
             f(item, *args, **kwargs) for item in iterable
         ]
         yield from results
+        # return results
 
 
     @classmethod
@@ -38,6 +39,7 @@ class ConcurrencyHandler:
                 else:
                     results[key] = [value]
         yield from results.items()
+        # return results
 
 
 class ThreadPoolHandler(ConcurrencyHandler):
@@ -84,7 +86,6 @@ class ProcessPoolHandler(ConcurrencyHandler):
         # @TODO: IMPLEMENT:
         # Checks must be put in place to ensure that inputs and outputs are
         # serializable. This means no SWIG objects and no generators.
-        raise NotImplementedError("This class is not implemented.")
         if executor is None:
             assert max_workers is not None, \
                 "`max_workers` must be set if `executor` is not passed."

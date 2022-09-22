@@ -1,7 +1,7 @@
 import numpy as np
 from light_pipe import pipeline
-from light_pipe.concurrency import concurrency_handlers
-from light_pipe.samples import sample_handlers
+from light_pipe import concurrency
+from light_pipe import processing
 from osgeo import gdal, ogr
 
 gdal.UseExceptions()
@@ -19,18 +19,6 @@ def get_savepath(uid) -> str:
 
 
 def main():
-    # ds = gdal.Open('./data/image.tif')
-    # ds2 = ogr.Open('./data/label/label.shp')
-    # inputs = [
-    #     {
-    #         'datum': ds,
-    #         'is_label': False,
-    #     },
-    #     {
-    #         'datum': ds2,
-    #         'is_label': True
-    #     }
-    # ]
     inputs = [
         {
             'datum': './data/image.tif',
@@ -41,9 +29,9 @@ def main():
             'is_label': True
         }
     ]
-    ch = concurrency_handlers.ThreadPoolHandler(max_workers=2)
-    gh = sample_handlers.GridSampleHandler(concurrency_handler=ch)
-    pipe = pipeline.LightPipeline(inputs, sample_handler=gh)
+    ch = concurrency.ThreadPoolHandler(max_workers=2)
+    gh = processing.GridSampleMaker(concurrency_handler=ch)
+    pipe = pipeline.LightPipeline(inputs, processors=[gh])
     pipe.run()
 
     sample_id = 0
