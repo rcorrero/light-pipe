@@ -87,28 +87,29 @@ def open_osgeo_inputs(input):
 def open_data(f):
     @functools.wraps(f)
     def open_data_wrapper(
-        datum = None, dataset = None, datasets = None, datasource = None,
-        datasources = None, *args, **kwargs
+        *args, **kwargs
     ):
-        data_kwargs = dict()
-        if datum is not None:
+        # @TODO: Remove redundancy
+        if &#34;datum&#34; in kwargs.keys():
+            datum = kwargs[&#34;datum&#34;]
             datum = open_osgeo_inputs(datum)
-            data_kwargs[&#34;datum&#34;] = datum
-        if dataset is not None:
+            kwargs[&#34;datum&#34;] = datum
+        if &#34;dataset&#34; in kwargs.keys():
+            dataset = kwargs[&#34;dataset&#34;]
             dataset = open_osgeo_inputs(dataset)
-            data_kwargs[&#34;dataset&#34;] = dataset
-        if datasets is not None:
+            kwargs[&#34;dataset&#34;] = dataset
+        if &#34;datasets&#34; in kwargs.keys():
+            datasets = kwargs[&#34;datasets&#34;]
             datasets = open_osgeo_inputs(datasets)
-            data_kwargs[&#34;datasets&#34;] = datasets
-        if datasource is not None:
+            kwargs[&#34;datasets&#34;] = datasets
+        if  &#34;datasource&#34; in kwargs.keys():
+            datasource = kwargs[&#34;datasource&#34;]
             datasource = open_osgeo_inputs(datasource)
-            data_kwargs[&#34;datasource&#34;] = datasource
-        if datasources is not None:
+            kwargs[&#34;datasource&#34;] = datasource
+        if &#34;datasources&#34; in kwargs.keys():
+            datasources = kwargs[&#34;datasources&#34;]
             datasources = open_osgeo_inputs(datasources)
-            data_kwargs[&#34;datasources&#34;] = datasources
-        # for key, value in data_kwargs.items():
-        #     kwargs[key] = value
-        kwargs = {**kwargs, **data_kwargs}
+            kwargs[&#34;datasources&#34;] = datasources
         
         return f(*args, **kwargs)
     return open_data_wrapper
@@ -206,28 +207,29 @@ def close_data(f):
 <pre><code class="python">def open_data(f):
     @functools.wraps(f)
     def open_data_wrapper(
-        datum = None, dataset = None, datasets = None, datasource = None,
-        datasources = None, *args, **kwargs
+        *args, **kwargs
     ):
-        data_kwargs = dict()
-        if datum is not None:
+        # @TODO: Remove redundancy
+        if &#34;datum&#34; in kwargs.keys():
+            datum = kwargs[&#34;datum&#34;]
             datum = open_osgeo_inputs(datum)
-            data_kwargs[&#34;datum&#34;] = datum
-        if dataset is not None:
+            kwargs[&#34;datum&#34;] = datum
+        if &#34;dataset&#34; in kwargs.keys():
+            dataset = kwargs[&#34;dataset&#34;]
             dataset = open_osgeo_inputs(dataset)
-            data_kwargs[&#34;dataset&#34;] = dataset
-        if datasets is not None:
+            kwargs[&#34;dataset&#34;] = dataset
+        if &#34;datasets&#34; in kwargs.keys():
+            datasets = kwargs[&#34;datasets&#34;]
             datasets = open_osgeo_inputs(datasets)
-            data_kwargs[&#34;datasets&#34;] = datasets
-        if datasource is not None:
+            kwargs[&#34;datasets&#34;] = datasets
+        if  &#34;datasource&#34; in kwargs.keys():
+            datasource = kwargs[&#34;datasource&#34;]
             datasource = open_osgeo_inputs(datasource)
-            data_kwargs[&#34;datasource&#34;] = datasource
-        if datasources is not None:
+            kwargs[&#34;datasource&#34;] = datasource
+        if &#34;datasources&#34; in kwargs.keys():
+            datasources = kwargs[&#34;datasources&#34;]
             datasources = open_osgeo_inputs(datasources)
-            data_kwargs[&#34;datasources&#34;] = datasources
-        # for key, value in data_kwargs.items():
-        #     kwargs[key] = value
-        kwargs = {**kwargs, **data_kwargs}
+            kwargs[&#34;datasources&#34;] = datasources
         
         return f(*args, **kwargs)
     return open_data_wrapper</code></pre>

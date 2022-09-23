@@ -69,18 +69,18 @@ class LightPipeSample:
     &#34;&#34;&#34;
     def __init__(
         self, uid: Union[int, float, str], 
-        data: Sequence[Tuple[gdal.Dataset, bool, Dict]], 
+        data: Sequence[Tuple[Union[gdal.Dataset, str], bool, Dict]], 
         preds: Optional[Sequence] = None, pos_only: Optional[bool] = False, 
         non_null_only: Optional[bool] = False, tile_y: Optional[int] = 224, 
         tile_x: Optional[int] = 224, array_dtype = np.uint16, 
         row_major: Optional[bool] = False, tile_coords: Optional[Sequence] = None,
-        shuffle_indices: Optional[Sequence] = None
+        shuffle_indices: Optional[Sequence] = None, *args, **kwargs
     ):
         self.uid = uid
         try:
             datasets, labels, metadata_list = self._make_data_lists(data)
         except TypeError:
-            if isinstance(data, gdal.Dataset):
+            if isinstance(data, gdal.Dataset) or isinstance(data, str):
                 data = [data]
             labels = [False for _ in range(len(data))]
             metadata = [None for _ in range(len(data))]
@@ -110,6 +110,11 @@ class LightPipeSample:
         labels = list() # Used to choose samples for y
         metadata_list = list()        
         for dataset, is_label, metadata in data:
+            assert dataset is not None, \
+                &#34;Received NoneType `dataset`.&#34;
+            if isinstance(dataset, str):
+                assert len(dataset) &gt; 0, &#34;Received empty string.&#34;
+                dataset = gdal.Open(dataset)
             datasets.append(dataset)
             labels.append(is_label)
             metadata_list.append(metadata)
@@ -130,6 +135,8 @@ class LightPipeSample:
         if i &lt; n:
             self._i += 1
             dataset = self.datasets[i]
+            if isinstance(dataset, str):
+                dataset = gdal.Open(dataset)
             is_label = self.labels[i]
             metadata = self.metadata_list[i]
             return dataset, is_label, metadata
@@ -345,7 +352,7 @@ georeferenced files.</p></div>
 </dd>
 <dt id="light_pipe.processing.sample.LightPipeSample"><code class="flex name class">
 <span>class <span class="ident">LightPipeSample</span></span>
-<span>(</span><span>uid: Union[int, float, str], data: Sequence[Tuple[osgeo.gdal.Dataset, bool, Dict]], preds: Optional[Sequence] = None, pos_only: Optional[bool] = False, non_null_only: Optional[bool] = False, tile_y: Optional[int] = 224, tile_x: Optional[int] = 224, array_dtype=numpy.uint16, row_major: Optional[bool] = False, tile_coords: Optional[Sequence] = None, shuffle_indices: Optional[Sequence] = None)</span>
+<span>(</span><span>uid: Union[int, float, str], data: Sequence[Tuple[Union[osgeo.gdal.Dataset, str], bool, Dict]], preds: Optional[Sequence] = None, pos_only: Optional[bool] = False, non_null_only: Optional[bool] = False, tile_y: Optional[int] = 224, tile_x: Optional[int] = 224, array_dtype=numpy.uint16, row_major: Optional[bool] = False, tile_coords: Optional[Sequence] = None, shuffle_indices: Optional[Sequence] = None, *args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Serves analysis-ready subsamples from arbitrarily-large raster(s) and
@@ -363,18 +370,18 @@ georeferenced files.</p></div>
     &#34;&#34;&#34;
     def __init__(
         self, uid: Union[int, float, str], 
-        data: Sequence[Tuple[gdal.Dataset, bool, Dict]], 
+        data: Sequence[Tuple[Union[gdal.Dataset, str], bool, Dict]], 
         preds: Optional[Sequence] = None, pos_only: Optional[bool] = False, 
         non_null_only: Optional[bool] = False, tile_y: Optional[int] = 224, 
         tile_x: Optional[int] = 224, array_dtype = np.uint16, 
         row_major: Optional[bool] = False, tile_coords: Optional[Sequence] = None,
-        shuffle_indices: Optional[Sequence] = None
+        shuffle_indices: Optional[Sequence] = None, *args, **kwargs
     ):
         self.uid = uid
         try:
             datasets, labels, metadata_list = self._make_data_lists(data)
         except TypeError:
-            if isinstance(data, gdal.Dataset):
+            if isinstance(data, gdal.Dataset) or isinstance(data, str):
                 data = [data]
             labels = [False for _ in range(len(data))]
             metadata = [None for _ in range(len(data))]
@@ -404,6 +411,11 @@ georeferenced files.</p></div>
         labels = list() # Used to choose samples for y
         metadata_list = list()        
         for dataset, is_label, metadata in data:
+            assert dataset is not None, \
+                &#34;Received NoneType `dataset`.&#34;
+            if isinstance(dataset, str):
+                assert len(dataset) &gt; 0, &#34;Received empty string.&#34;
+                dataset = gdal.Open(dataset)
             datasets.append(dataset)
             labels.append(is_label)
             metadata_list.append(metadata)
@@ -424,6 +436,8 @@ georeferenced files.</p></div>
         if i &lt; n:
             self._i += 1
             dataset = self.datasets[i]
+            if isinstance(dataset, str):
+                dataset = gdal.Open(dataset)
             is_label = self.labels[i]
             metadata = self.metadata_list[i]
             return dataset, is_label, metadata
@@ -622,6 +636,8 @@ georeferenced files.</p></div>
     if i &lt; n:
         self._i += 1
         dataset = self.datasets[i]
+        if isinstance(dataset, str):
+            dataset = gdal.Open(dataset)
         is_label = self.labels[i]
         metadata = self.metadata_list[i]
         return dataset, is_label, metadata
