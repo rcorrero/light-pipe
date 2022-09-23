@@ -56,28 +56,29 @@ def open_osgeo_inputs(input):
 def open_data(f):
     @functools.wraps(f)
     def open_data_wrapper(
-        datum = None, dataset = None, datasets = None, datasource = None,
-        datasources = None, *args, **kwargs
+        *args, **kwargs
     ):
-        data_kwargs = dict()
-        if datum is not None:
+        # @TODO: Remove redundancy
+        if "datum" in kwargs.keys():
+            datum = kwargs["datum"]
             datum = open_osgeo_inputs(datum)
-            data_kwargs["datum"] = datum
-        if dataset is not None:
+            kwargs["datum"] = datum
+        if "dataset" in kwargs.keys():
+            dataset = kwargs["dataset"]
             dataset = open_osgeo_inputs(dataset)
-            data_kwargs["dataset"] = dataset
-        if datasets is not None:
+            kwargs["dataset"] = dataset
+        if "datasets" in kwargs.keys():
+            datasets = kwargs["datasets"]
             datasets = open_osgeo_inputs(datasets)
-            data_kwargs["datasets"] = datasets
-        if datasource is not None:
+            kwargs["datasets"] = datasets
+        if  "datasource" in kwargs.keys():
+            datasource = kwargs["datasource"]
             datasource = open_osgeo_inputs(datasource)
-            data_kwargs["datasource"] = datasource
-        if datasources is not None:
+            kwargs["datasource"] = datasource
+        if "datasources" in kwargs.keys():
+            datasources = kwargs["datasources"]
             datasources = open_osgeo_inputs(datasources)
-            data_kwargs["datasources"] = datasources
-        # for key, value in data_kwargs.items():
-        #     kwargs[key] = value
-        kwargs = {**kwargs, **data_kwargs}
+            kwargs["datasources"] = datasources
         
         return f(*args, **kwargs)
     return open_data_wrapper

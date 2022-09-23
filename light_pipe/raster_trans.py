@@ -12,7 +12,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import numpy as np
 from osgeo import gdal, ogr, osr
 
-from light_pipe import raster_io, tiling
+from light_pipe import gdal_data_handlers, raster_io, tiling
 
 gdal.UseExceptions()
 ogr.UseExceptions()
@@ -62,9 +62,11 @@ def rasterize_datasource(
     return vector_datasource, out_dataset
     
 
+@gdal_data_handlers.open_data
 def rasterize_datasources(
-    dataset: gdal.Dataset, datasources: List[ogr.DataSource], 
-    in_memory: Optional[bool] = True, out_dtype=gdal.GDT_Byte, out_bands = [1], 
+    dataset: gdal.Dataset, datasources: List[ogr.DataSource],
+    in_memory: Optional[bool] = True, return_filepaths: Optional[bool] = False,
+    out_dtype = gdal.GDT_Byte, out_bands = [1], 
     out_dir = None, filepath_generator: Optional[Callable] = None, *args, **kwargs
 ):
     metadata = {**kwargs, "args":args}
@@ -105,10 +107,18 @@ def rasterize_datasources(
         )
 
         datasets.append(out_dataset)
-        yield item_uid, (out_dataset, True, kwargs)
-    yield item_uid, (dataset, False, metadata)
+        if return_filepaths:
+            yield item_uid, (out_filepath, True, kwargs)
+        else:
+            yield item_uid, (out_dataset, True, kwargs)
+
+    if return_filepaths:
+        yield item_uid, (item_filepath, False, metadata)
+    else:
+        yield item_uid, (dataset, False, metadata)
 
 
+@gdal_data_handlers.open_data
 def make_north_up_dataset_from_tiles_like(
     datasets: List[gdal.Dataset], filepath: str, tiles: np.ndarray, tile_y: int, 
     tile_x: int, row_major = False, use_ancestor_pixel_size = False, 

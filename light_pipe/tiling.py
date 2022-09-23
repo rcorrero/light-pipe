@@ -14,6 +14,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 from osgeo import gdal
 
+from light_pipe import gdal_data_handlers
+
 gdal.UseExceptions()
 
 
@@ -138,6 +140,7 @@ def get_padded_array_from_multiple_datasets(
     return datasets, padded, band_map
 
 
+@gdal_data_handlers.open_data
 def get_tiles(
     datasets: List[gdal.Dataset], labels: List[bool], tile_y: int, 
     tile_x: int, array_dtype, row_major: bool, 

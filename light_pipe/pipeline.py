@@ -22,6 +22,8 @@ class LightPipeline:
         self.inputs = inputs       
         if processors is None:
             processors = [processing.SampleMaker()]
+        elif isinstance(processors, processing.SampleProcessor):
+            processors = [processors]
         if concurrency_handler is not None:
             for processor in processors:
                 processor.set_concurrency(concurrency_handler=concurrency_handler)

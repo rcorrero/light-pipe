@@ -26,7 +26,6 @@ def main():
     pipe = pipeline.LightPipeline(inputs)
     pipe.run()
 
-    sample_id = 0
     for sample in pipe:
         tiles = sample.tile()
         preds = list()
@@ -36,8 +35,7 @@ def main():
 
         savepath = get_savepath(sample.uid)
         preds = np.array(preds)
-        sample.save(savepath, preds)
-        sample_id += 1    
+        sample.save(savepath, preds) 
 
 
 if __name__ == "__main__":

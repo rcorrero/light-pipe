@@ -1,7 +1,7 @@
+import time
+
 import numpy as np
-from light_pipe import pipeline
-from light_pipe import concurrency
-from light_pipe import processing
+from light_pipe import concurrency, pipeline, processing
 from osgeo import gdal, ogr
 
 gdal.UseExceptions()
@@ -18,6 +18,20 @@ def get_savepath(uid) -> str:
     return savepath
 
 
+def process_fn(sample, tile_counter):
+    tiles = sample.tile(assert_tile_smaller_than_raster=True)
+    preds = list()
+    for tile in tiles:
+        tile_counter[0] +=1
+        pred = get_pred(tile.y)
+        preds.append(pred)
+
+    savepath = get_savepath(sample.uid)
+    preds = np.array(preds)
+    sample.save(savepath, preds)
+    return sample.uid, savepath
+
+
 def main():
     inputs = [
         {
@@ -29,23 +43,21 @@ def main():
             'is_label': True
         }
     ]
-    ch = concurrency.ThreadPoolHandler(max_workers=2)
-    gh = processing.GridSampleMaker(concurrency_handler=ch)
+    gh = processing.GridSampleMaker()
     pipe = pipeline.LightPipeline(inputs, processors=[gh])
-    pipe.run()
-
-    sample_id = 0
-    for sample in pipe:
-        tiles = sample.tile(assert_tile_smaller_than_raster=True)
-        preds = list()
-        for tile in tiles:
-            pred = get_pred(tile.y)
-            preds.append(pred)
-
-        savepath = get_savepath(sample.uid)
-        preds = np.array(preds)
-        sample.save(savepath, preds)
-        sample_id += 1    
+    start = time.time()
+    pipe.run(blocking=True)
+    end = time.time()
+    print(f"Time to run pipeline: {end - start} seconds.")
+    ch = concurrency.ThreadPoolHandler(max_workers=64)
+    proc = processing.SampleProcessor(fn=process_fn, concurrency_handler=ch)
+    tile_counter = [0]
+    start = time.time()
+    results = proc.run(pipe, tile_counter = tile_counter)
+    list(results)
+    end = time.time()  
+    print(f"Time to make make predictions: {end - start} seconds.")
+    print(f"Total number of tiles: {tile_counter[0]}.")
 
 
 if __name__ == "__main__":

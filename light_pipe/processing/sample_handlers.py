@@ -9,7 +9,7 @@ of a specific type. This operation is defined in the `make_samples` method.
 
 from typing import Callable, Generator, Iterable, Optional, Sequence
 
-from light_pipe import concurrency, gdal_data_handlers, gridding, raster_trans
+from light_pipe import concurrency, gridding, raster_trans
 from light_pipe.processing import sample
 
 
@@ -18,7 +18,8 @@ class SampleProcessor:
         self, fn: Optional[Callable] = None, 
         wrappers: Optional[Sequence[Callable]] = None,
         concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
-        fork: Optional[Callable] = None, join: Optional[Callable] = None
+        fork: Optional[Callable] = None, join: Optional[Callable] = None,
+        make_parallelizable: Optional[bool] = None
     ):
         if wrappers is not None:
             for wrapper in wrappers:
@@ -35,6 +36,12 @@ class SampleProcessor:
         else:
             self.fork = concurrency_handler.fork
             self.join = concurrency_handler.join
+        if make_parallelizable is None:
+            if concurrency_handler is not None:
+                make_parallelizable = concurrency_handler.parallel
+            else:
+                make_parallelizable = False
+        self.make_parallelizable = make_parallelizable
 
 
     def run(
@@ -43,7 +50,7 @@ class SampleProcessor:
         if fn is None:
             fn = self.fn
         results = self.join(
-            self.fork(self.fn, iterable, *args, **kwargs)
+            self.fork(f=fn, iterable=iterable, *args, **kwargs)
         )
         yield from results
 
@@ -56,34 +63,66 @@ class SampleProcessor:
 
 class SampleMaker(SampleProcessor):
     def __init__(
-        self, fn: Optional[Callable] = None,in_memory: Optional[bool] = True, 
-        *args, **kwargs
+        self, fn: Optional[Callable] = None,
+        concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
+        in_memory: Optional[bool] = True, 
+        make_parallelizable: Optional[bool] = None, *args, **kwargs
     ):
+        if make_parallelizable is None:
+            if concurrency_handler is not None:
+                make_parallelizable = concurrency_handler.parallel
+            else:
+                make_parallelizable = False
         if fn is None:
-            fn = self._fork_fn
-        kwargs = {**kwargs, "fn":fn} # Replaces `fn` key in kwargs if present
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        self.make_parallelizable = make_parallelizable
+        kwargs = {
+            **kwargs, 
+            "fn":fn,
+            "concurrency_handler": concurrency_handler,
+            "make_parallelizable": make_parallelizable
+        }
         super().__init__(*args, **kwargs)
         self.in_memory = in_memory
 
 
-    @staticmethod
-    @gdal_data_handlers.open_data
-    def _rasterize_datasources(*args, **kwargs):
+    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+        kwargs = {**kwargs, **iterable_kwargs}
         return raster_trans.rasterize_datasources(*args, **kwargs)
 
 
-    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+    def _fork_fn_no_gen(self, iterable_kwargs, in_memory, *args, **kwargs):
+        assert not in_memory, \
+            "Cannot parallelize when `in_memory = True`."
         kwargs = {**kwargs, **iterable_kwargs}
-        return self._rasterize_datasources(*args, **kwargs)
+
+        results = raster_trans.rasterize_datasources(
+            in_memory=in_memory, return_filepaths=True, *args, **kwargs
+        )
+        results_list = [res for res in results]
+        return results_list
 
 
     def make_samples(
         self, iterable: Iterable, in_memory: Optional[bool] = None, 
+        make_parallelizable: Optional[bool] = None,
         load_samples: Optional[bool] = False, *args, **kwargs
     ) -> Generator:
         if in_memory is None:
             in_memory = self.in_memory
-        results = super().run(iterable=iterable, *args, **kwargs)
+        if make_parallelizable is not None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        else:
+            fn = self.fn            
+        results = super().run(
+            iterable=iterable, fn=fn, in_memory=in_memory, *args, **kwargs
+        )
         for result in results:
             uid, data_tuples = result
             sample_item = sample.LightPipeSample(
@@ -99,36 +138,56 @@ class SampleMaker(SampleProcessor):
 
 
 class GridSampleMaker(SampleMaker):
-    def __init__(
-        self, fn: Optional[Callable] = None, *args, **kwargs
-    ):
-        if fn is None:
-            fn = self._fork_fn
-        kwargs = {**kwargs, "fn":fn} # Replaces `fn` key in kwargs if present
-        super().__init__(*args, **kwargs)
-
-
-    @staticmethod
-    @gdal_data_handlers.open_data
-    def _make_grid_cell_datasets(*args, **kwargs):
-        return gridding.make_grid_cell_datasets(*args, **kwargs)
-
-    
     def _fork_fn(self, iterable_kwargs, *args, **kwargs):
         kwargs = {**kwargs, **iterable_kwargs}
-        return self._make_grid_cell_datasets(*args, **kwargs)
+        grid_cells = gridding.get_grid_cells(*args, **kwargs)
+        results = self.join(
+            self.fork(
+                f=gridding.make_grid_cell_dataset, iterable=grid_cells,
+                *args, **kwargs
+                )
+            )
+        for qkey, data_list in results:
+            for data in data_list:
+                yield qkey, data
+
+
+    def _fork_fn_no_gen(self, iterable_kwargs, in_memory, *args, **kwargs):
+        assert not in_memory, \
+            "Cannot parallelize when `in_memory = True`."
+        kwargs = {**kwargs, **iterable_kwargs}
+        grid_cells = gridding.get_grid_cells(*args, **kwargs)
+        results = self.join(
+            self.fork(
+                f=gridding.make_grid_cell_dataset, iterable=grid_cells,
+                in_memory=in_memory, return_filepaths=True, *args, **kwargs
+                )
+            )
+        results_list = list()
+        for qkey, data_list in results:
+            for data in data_list:
+                results_list.append((qkey, data))
+        return results_list
 
 
     def make_samples(
-        self, iterable: Iterable[dict], zoom: Optional[int] = 14, 
-        in_memory: Optional[bool] = None, load_samples: Optional[bool] = False, 
+        self, iterable: Iterable[dict],
+        zoom: Optional[int] = 14, in_memory: Optional[bool] = None, 
+        make_parallelizable: Optional[bool] = None,
+        load_samples: Optional[bool] = False, 
         *args, **kwargs
     ) -> Generator:
         if in_memory is None:
             in_memory = self.in_memory
-        
+        if make_parallelizable is not None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        else:
+            fn = self.fn
         results = self.join(self.fork(
-            self._fork_fn, iterable, zoom=zoom,
+            fn, iterable, zoom=zoom,
             in_memory=in_memory, *args, **kwargs
         ))
         for result in results:

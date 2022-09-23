@@ -37,18 +37,18 @@ class LightPipeSample:
     """
     def __init__(
         self, uid: Union[int, float, str], 
-        data: Sequence[Tuple[gdal.Dataset, bool, Dict]], 
+        data: Sequence[Tuple[Union[gdal.Dataset, str], bool, Dict]], 
         preds: Optional[Sequence] = None, pos_only: Optional[bool] = False, 
         non_null_only: Optional[bool] = False, tile_y: Optional[int] = 224, 
         tile_x: Optional[int] = 224, array_dtype = np.uint16, 
         row_major: Optional[bool] = False, tile_coords: Optional[Sequence] = None,
-        shuffle_indices: Optional[Sequence] = None
+        shuffle_indices: Optional[Sequence] = None, *args, **kwargs
     ):
         self.uid = uid
         try:
             datasets, labels, metadata_list = self._make_data_lists(data)
         except TypeError:
-            if isinstance(data, gdal.Dataset):
+            if isinstance(data, gdal.Dataset) or isinstance(data, str):
                 data = [data]
             labels = [False for _ in range(len(data))]
             metadata = [None for _ in range(len(data))]
@@ -78,6 +78,11 @@ class LightPipeSample:
         labels = list() # Used to choose samples for y
         metadata_list = list()        
         for dataset, is_label, metadata in data:
+            assert dataset is not None, \
+                "Received NoneType `dataset`."
+            if isinstance(dataset, str):
+                assert len(dataset) > 0, "Received empty string."
+                dataset = gdal.Open(dataset)
             datasets.append(dataset)
             labels.append(is_label)
             metadata_list.append(metadata)
@@ -98,6 +103,8 @@ class LightPipeSample:
         if i < n:
             self._i += 1
             dataset = self.datasets[i]
+            if isinstance(dataset, str):
+                dataset = gdal.Open(dataset)
             is_label = self.labels[i]
             metadata = self.metadata_list[i]
             return dataset, is_label, metadata

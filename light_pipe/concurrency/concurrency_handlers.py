@@ -13,6 +13,9 @@ from typing import Callable, Generator, Iterable, Optional, Tuple
 
 
 class ConcurrencyHandler:
+    parallel: bool = False
+
+
     @classmethod
     def fork(cls, f: Callable, iterable: Iterable, *args, **kwargs) -> Generator:
         results = [
@@ -26,7 +29,7 @@ class ConcurrencyHandler:
     def join(cls, iterable: Iterable[Tuple]) -> Generator:
         results = dict()
         for item in iterable:
-            if isinstance(item, Generator):
+            if isinstance(item, Generator) or isinstance(item, list):
                 for key, values in cls.join(item):
                     if key in results.keys():
                         results[key] += values
@@ -79,6 +82,9 @@ class ThreadPoolHandler(ConcurrencyHandler):
 
 
 class ProcessPoolHandler(ConcurrencyHandler):
+    parallel: bool = True
+
+
     def __init__(
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None
