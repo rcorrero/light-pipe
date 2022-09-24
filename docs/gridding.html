@@ -192,16 +192,26 @@ def get_grid_cells_from_dataset(
 
 def get_grid_cells_from_datasource(
     datasource: ogr.DataSource, zoom: Optional[int] = 14,
+    dstSRS: Optional[Union[osr.SpatialReference, None]] = None,
+    default_dd_epsg: Optional[int] = DEFAULT_DD_EPSG,    
     truncate: Optional[bool] = False, *args, **kwargs
 ) -&gt; List[GridCell]:
+    if dstSRS is None:
+        dstSRS = osr.SpatialReference()
+        dstSRS.ImportFromEPSG(default_dd_epsg) 
     n_layers = datasource.GetLayerCount()
     grid_cells = []
     for i in range(n_layers):
         layer = datasource.GetLayerByIndex(i)
+        srcSRS = layer.GetSpatialRef()
+        transformation = osr.CoordinateTransformation(srcSRS, dstSRS)
+
         # extent = layer.GetExtent()
         for feature in layer:
+            feature.GetGeometryRef().Transform(transformation)
             extent = feature.GetGeometryRef().GetEnvelope()
-            minx, maxx, miny, maxy = extent
+            # minx, maxx, miny, maxy = extent
+            miny, maxy, minx, maxx = extent
             layer_cells = mercantile.tiles(
                 west=minx, south=miny, east=maxx, north=maxy, zooms=zoom,
                 truncate=truncate
@@ -224,7 +234,8 @@ def get_grid_cells(
         )
     elif isinstance(datum, ogr.DataSource):
         grid_cells = get_grid_cells_from_datasource(
-            datasource=datum, zoom=zoom, truncate=truncate, *args, **kwargs
+            datasource=datum, zoom=zoom, dstSRS=dstSRS, 
+            default_dd_epsg=default_dd_epsg, truncate=truncate, *args, **kwargs
         )
     return grid_cells</code></pre>
 </details>
@@ -259,7 +270,8 @@ def get_grid_cells(
         )
     elif isinstance(datum, ogr.DataSource):
         grid_cells = get_grid_cells_from_datasource(
-            datasource=datum, zoom=zoom, truncate=truncate, *args, **kwargs
+            datasource=datum, zoom=zoom, dstSRS=dstSRS, 
+            default_dd_epsg=default_dd_epsg, truncate=truncate, *args, **kwargs
         )
     return grid_cells</code></pre>
 </details>
@@ -310,7 +322,7 @@ def get_grid_cells(
 </details>
 </dd>
 <dt id="light_pipe.gridding.get_grid_cells_from_datasource"><code class="name flex">
-<span>def <span class="ident">get_grid_cells_from_datasource</span></span>(<span>datasource: osgeo.ogr.DataSource, zoom: Optional[int] = 14, truncate: Optional[bool] = False, *args, **kwargs) ‑> List[<a title="light_pipe.gridding.GridCell" href="#light_pipe.gridding.GridCell">GridCell</a>]</span>
+<span>def <span class="ident">get_grid_cells_from_datasource</span></span>(<span>datasource: osgeo.ogr.DataSource, zoom: Optional[int] = 14, dstSRS: Optional[osgeo.osr.SpatialReference] = None, default_dd_epsg: Optional[int] = 4326, truncate: Optional[bool] = False, *args, **kwargs) ‑> List[<a title="light_pipe.gridding.GridCell" href="#light_pipe.gridding.GridCell">GridCell</a>]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -320,16 +332,26 @@ def get_grid_cells(
 </summary>
 <pre><code class="python">def get_grid_cells_from_datasource(
     datasource: ogr.DataSource, zoom: Optional[int] = 14,
+    dstSRS: Optional[Union[osr.SpatialReference, None]] = None,
+    default_dd_epsg: Optional[int] = DEFAULT_DD_EPSG,    
     truncate: Optional[bool] = False, *args, **kwargs
 ) -&gt; List[GridCell]:
+    if dstSRS is None:
+        dstSRS = osr.SpatialReference()
+        dstSRS.ImportFromEPSG(default_dd_epsg) 
     n_layers = datasource.GetLayerCount()
     grid_cells = []
     for i in range(n_layers):
         layer = datasource.GetLayerByIndex(i)
+        srcSRS = layer.GetSpatialRef()
+        transformation = osr.CoordinateTransformation(srcSRS, dstSRS)
+
         # extent = layer.GetExtent()
         for feature in layer:
+            feature.GetGeometryRef().Transform(transformation)
             extent = feature.GetGeometryRef().GetEnvelope()
-            minx, maxx, miny, maxy = extent
+            # minx, maxx, miny, maxy = extent
+            miny, maxy, minx, maxx = extent
             layer_cells = mercantile.tiles(
                 west=minx, south=miny, east=maxx, north=maxy, zooms=zoom,
                 truncate=truncate

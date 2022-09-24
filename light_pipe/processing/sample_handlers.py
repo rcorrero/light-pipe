@@ -161,8 +161,8 @@ class GridSampleMaker(SampleMaker):
             self.fork(
                 f=gridding.make_grid_cell_dataset, iterable=grid_cells,
                 in_memory=in_memory, return_filepaths=True, *args, **kwargs
-                )
             )
+        )
         results_list = list()
         for qkey, data_list in results:
             for data in data_list:

@@ -29,7 +29,8 @@
 <pre><code class="python">__author__ = &#34;Richard Correro (rcorrero@stanford.edu)&#34;
 
 
-from .concurrency_handlers import *</code></pre>
+from .concurrency_handlers import *
+from .threading_utils import *</code></pre>
 </details>
 </section>
 <section>
@@ -39,6 +40,11 @@ from .concurrency_handlers import *</code></pre>
 <dd>
 <div class="desc"><p>This module contains the definition of <code>ConcurrencyHandler</code>. <code>ConcurrencyHandler</code>
 instances are associated with two methods, <code>fork</code> and <code>join</code>, which …</p></div>
+</dd>
+<dt><code class="name"><a title="light_pipe.concurrency.threading_utils" href="threading_utils.html">light_pipe.concurrency.threading_utils</a></code></dt>
+<dd>
+<div class="desc"><p>This module contains decorators which can be used to execute user-defined
+functions in a concurrent manner.</p></div>
 </dd>
 </dl>
 </section>
@@ -63,6 +69,7 @@ instances are associated with two methods, <code>fork</code> and <code>join</cod
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
 <li><code><a title="light_pipe.concurrency.concurrency_handlers" href="concurrency_handlers.html">light_pipe.concurrency.concurrency_handlers</a></code></li>
+<li><code><a title="light_pipe.concurrency.threading_utils" href="threading_utils.html">light_pipe.concurrency.threading_utils</a></code></li>
 </ul>
 </li>
 </ul>

@@ -37,7 +37,7 @@ class LightPipeSample:
     """
     def __init__(
         self, uid: Union[int, float, str], 
-        data: Sequence[Tuple[Union[gdal.Dataset, str], bool, Dict]], 
+        data: Optional[Sequence[Tuple[Union[gdal.Dataset, str], bool, Dict]]] = None, 
         preds: Optional[Sequence] = None, pos_only: Optional[bool] = False, 
         non_null_only: Optional[bool] = False, tile_y: Optional[int] = 224, 
         tile_x: Optional[int] = 224, array_dtype = np.uint16, 
@@ -45,19 +45,14 @@ class LightPipeSample:
         shuffle_indices: Optional[Sequence] = None, *args, **kwargs
     ):
         self.uid = uid
-        try:
+        self.datasets = list()
+        self.labels = list()
+        self.metadata_list = list()        
+        if data is not None:
             datasets, labels, metadata_list = self._make_data_lists(data)
-        except TypeError:
-            if isinstance(data, gdal.Dataset) or isinstance(data, str):
-                data = [data]
-            labels = [False for _ in range(len(data))]
-            metadata = [None for _ in range(len(data))]
-            data = list(zip(data, labels, metadata))
-            datasets, labels, metadata_list = self._make_data_lists(data)
-
-        self.datasets = datasets
-        self.labels = labels
-        self.metadata_list = metadata_list
+            self.datasets += datasets
+            self.labels += labels
+            self.metadata_list += metadata_list
 
         self.preds = preds
         self.pos_only = pos_only
@@ -76,17 +71,59 @@ class LightPipeSample:
     def _make_data_lists(self, data):
         datasets = list()
         labels = list() # Used to choose samples for y
-        metadata_list = list()        
-        for dataset, is_label, metadata in data:
-            assert dataset is not None, \
-                "Received NoneType `dataset`."
-            if isinstance(dataset, str):
-                assert len(dataset) > 0, "Received empty string."
-                dataset = gdal.Open(dataset)
-            datasets.append(dataset)
-            labels.append(is_label)
-            metadata_list.append(metadata)
+        metadata_list = list() 
+        try:       
+            for dataset, is_label, metadata in data:
+                assert dataset is not None, \
+                    "Received NoneType `dataset`."
+                if isinstance(dataset, str):
+                    assert len(dataset) > 0, "Received empty string."
+                    dataset = gdal.Open(dataset)
+                datasets.append(dataset)
+                labels.append(is_label)
+                metadata_list.append(metadata)
+        except:
+            if isinstance(data, gdal.Dataset) or isinstance(data, str):
+                data = [data]
+            labels = [False for _ in range(len(data))]
+            metadata = [None for _ in range(len(data))]
+            data = list(zip(data, labels, metadata))
+            datasets, labels, metadata_list = self._make_data_lists(data)           
         return datasets, labels, metadata_list
+
+
+    def add_dataset(
+        self, 
+        dataset: Optional[Union[gdal.Dataset, Sequence[gdal.Dataset]]] = None,
+        label: Optional[Union[bool, Sequence[bool]]] = None,
+        metadata: Optional[Union[dict, Sequence[dict]]] = None,
+        data: Optional[Sequence[Tuple[Union[gdal.Dataset, str], bool, Dict]]] = None,
+    ):
+        if data is not None:
+            datasets, labels, metadata_list = self._make_data_lists(data)
+            self.datasets += datasets
+            self.labels += labels
+            self.metadata_list += metadata_list
+        if dataset is not None:
+            if isinstance(dataset, gdal.Dataset) or isinstance(dataset, str):
+                dataset = [dataset]
+            if label is None:
+                label = [False for _ in range(len(dataset))]
+            elif isinstance(label, bool):
+                label = [label]
+            assert len(label) == len(dataset), \
+                "Number of labels supplied does not match number of datasets."
+            if metadata is None:
+                metadata = [None for _ in range(len(dataset))]
+            elif isinstance(metadata, dict):
+                metadata = [metadata]
+            assert len(metadata) == len(metadata), \
+                "Number of metadata supplied does not match number of datasets."
+            data = list(zip(dataset, label, metadata))
+            datasets, labels, metadata_list = self._make_data_lists(data)
+            self.datasets += datasets
+            self.labels += labels
+            self.metadata_list += metadata_list
 
 
     def __iter__(self):

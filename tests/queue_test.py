@@ -7,7 +7,7 @@ import threading
 import time
 
 import numpy as np
-from light_pipe import threading_utils
+from light_pipe.concurrency import threading_utils
 
 from .make_arrays import MANIFEST_PATH, RANDOM_SEED
 from .single_thread_test import process_array_cpu

@@ -13,6 +13,8 @@ from osgeo import gdal, ogr
 
 from light_pipe import raster_io
 
+DATA_ARGS = ["datum", "dataset", "datasets", "datasource", "datasources"]
+
 
 class UnknownInputError(Exception):
     """
@@ -58,28 +60,11 @@ def open_data(f):
     def open_data_wrapper(
         *args, **kwargs
     ):
-        # @TODO: Remove redundancy
-        if "datum" in kwargs.keys():
-            datum = kwargs["datum"]
-            datum = open_osgeo_inputs(datum)
-            kwargs["datum"] = datum
-        if "dataset" in kwargs.keys():
-            dataset = kwargs["dataset"]
-            dataset = open_osgeo_inputs(dataset)
-            kwargs["dataset"] = dataset
-        if "datasets" in kwargs.keys():
-            datasets = kwargs["datasets"]
-            datasets = open_osgeo_inputs(datasets)
-            kwargs["datasets"] = datasets
-        if  "datasource" in kwargs.keys():
-            datasource = kwargs["datasource"]
-            datasource = open_osgeo_inputs(datasource)
-            kwargs["datasource"] = datasource
-        if "datasources" in kwargs.keys():
-            datasources = kwargs["datasources"]
-            datasources = open_osgeo_inputs(datasources)
-            kwargs["datasources"] = datasources
-        
+        for data_arg in DATA_ARGS:
+            if data_arg in kwargs.keys():
+                data_val = kwargs[data_arg]
+                data_val = open_osgeo_inputs(data_val)
+                kwargs[data_arg] = data_val            
         return f(*args, **kwargs)
     return open_data_wrapper
 
@@ -87,19 +72,13 @@ def open_data(f):
 def close_data(f):
     @functools.wraps(f)
     def close_data_wrapper(        
-        datum = None, dataset = None, datasets = None, datasource = None,
-        datasources = None, *args, **kwargs
+        *args, **kwargs
     ):
         res = f(*args, **kwargs)
-        if datum is not None:
-            del(datum)
-        if dataset is not None:
-            del(dataset)
-        if datasets is not None:
-            del(datasets)
-        if datasource is not None:
-            del(datasource)
-        if datasources is not None:
-            del(datasources)
+        for data_arg in DATA_ARGS:
+            if data_arg in kwargs.keys():
+                data_val = kwargs[data_arg]
+                del(data_val)  
+                kwargs[data_arg] = None         
         return res
     return close_data_wrapper

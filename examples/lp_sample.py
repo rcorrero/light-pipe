@@ -20,7 +20,7 @@ def main():
     inputs = [
         {
             'dataset': './data/image.tif',
-            'datasources': ['./data/label/label.shp']
+            'datasources': ['./data/label_utm.geojson']
         },
     ]
     pipe = pipeline.LightPipeline(inputs)

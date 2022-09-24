@@ -160,16 +160,26 @@ def get_grid_cells_from_dataset(
 
 def get_grid_cells_from_datasource(
     datasource: ogr.DataSource, zoom: Optional[int] = 14,
+    dstSRS: Optional[Union[osr.SpatialReference, None]] = None,
+    default_dd_epsg: Optional[int] = DEFAULT_DD_EPSG,    
     truncate: Optional[bool] = False, *args, **kwargs
 ) -> List[GridCell]:
+    if dstSRS is None:
+        dstSRS = osr.SpatialReference()
+        dstSRS.ImportFromEPSG(default_dd_epsg) 
     n_layers = datasource.GetLayerCount()
     grid_cells = []
     for i in range(n_layers):
         layer = datasource.GetLayerByIndex(i)
+        srcSRS = layer.GetSpatialRef()
+        transformation = osr.CoordinateTransformation(srcSRS, dstSRS)
+
         # extent = layer.GetExtent()
         for feature in layer:
+            feature.GetGeometryRef().Transform(transformation)
             extent = feature.GetGeometryRef().GetEnvelope()
-            minx, maxx, miny, maxy = extent
+            # minx, maxx, miny, maxy = extent
+            miny, maxy, minx, maxx = extent
             layer_cells = mercantile.tiles(
                 west=minx, south=miny, east=maxx, north=maxy, zooms=zoom,
                 truncate=truncate
@@ -192,6 +202,7 @@ def get_grid_cells(
         )
     elif isinstance(datum, ogr.DataSource):
         grid_cells = get_grid_cells_from_datasource(
-            datasource=datum, zoom=zoom, truncate=truncate, *args, **kwargs
+            datasource=datum, zoom=zoom, dstSRS=dstSRS, 
+            default_dd_epsg=default_dd_epsg, truncate=truncate, *args, **kwargs
         )
     return grid_cells

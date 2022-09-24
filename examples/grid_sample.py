@@ -39,7 +39,7 @@ def main():
             'is_label': False,
         },
         {
-            'datum': './data/label/label.shp',
+            'datum': './data/label_utm.geojson',
             'is_label': True
         }
     ]
