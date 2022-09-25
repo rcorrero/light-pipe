@@ -19,7 +19,7 @@ def get_savepath(uid) -> str:
 def main():
     inputs = [
         {
-            'dataset': './data/image.tif',
+            'dataset': '/vsizip/data/image.zip/image.tif',
             'datasources': ['./data/label_utm.geojson']
         },
     ]

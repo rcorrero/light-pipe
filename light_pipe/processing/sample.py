@@ -47,12 +47,14 @@ class LightPipeSample:
         self.uid = uid
         self.datasets = list()
         self.labels = list()
-        self.metadata_list = list()        
+        self.metadata_list = list()    
+        n = 0    
         if data is not None:
             datasets, labels, metadata_list = self._make_data_lists(data)
             self.datasets += datasets
             self.labels += labels
             self.metadata_list += metadata_list
+            n += len(datasets)
 
         self.preds = preds
         self.pos_only = pos_only
@@ -63,8 +65,7 @@ class LightPipeSample:
         self.row_major = row_major
         self.tile_coords = tile_coords
         self.shuffle_indices = shuffle_indices
-
-        self.n = len(datasets)
+        self.n = n
         self._i = 0
 
 
@@ -124,6 +125,7 @@ class LightPipeSample:
             self.datasets += datasets
             self.labels += labels
             self.metadata_list += metadata_list
+        self.n = len(self.datasets)
 
 
     def __iter__(self):
