@@ -10,7 +10,7 @@ __doc__ = """
 
 ## Overview
 
-Light-Pipe is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe may be used during model development to produce training data and facilitate interaction with it in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+Light-Pipe is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce, and facilitate interaction with, training data in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
 Light-Pipe has one non-standard Python dependency, the [`osgeo`](https://gdal.org/) library, which is released under an MIT style open source license by [The Open Source Geospatial Foundation](https://www.osgeo.org/).
 
@@ -18,7 +18,7 @@ Light-Pipe has one non-standard Python dependency, the [`osgeo`](https://gdal.or
 
 The following is a list of guidelines which this package follows:
 
-1. Light-Pipe handles geospatial data processing and model deployment. It may be used to generate training data on-the-fly during both training and production. Core operations are provided, and abstractions are provided which allow the user to define custom operations.
+1. Light-Pipe handles geospatial data processing and model deployment. It may be used to generate analysis-ready samples on-the-fly during both training and production. Core operations are provided, and abstractions are provided which allow the user to define custom operations.
 
 2. Light-Pipe is geospatially-aware and abstracts away the minutiae of geospatial data, allowing the user to focus instead on model development, training, and evaluation.
 
