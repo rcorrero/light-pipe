@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>light_pipe API documentation</title>
-<meta name="description" content="Light-Pipe …" />
+<meta name="description" content="[Light-Pipe](https://github.com/rcorrero/light-pipe) …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,10 +22,10 @@
 <h1 class="title">Package <code>light_pipe</code></h1>
 </header>
 <section id="section-intro">
-<h1 id="light-pipe">Light-Pipe</h1>
+<h1 id="light-pipe"><a href="https://github.com/rcorrero/light-pipe">Light-Pipe</a></h1>
 <hr>
 <h2 id="overview">Overview</h2>
-<p>Light-Pipe is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce, and facilitate interaction with, training data in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD 3-Clause License</a>.</p>
+<p><a href="https://www.light-pipe.io/">Light-Pipe</a> is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD 3-Clause License</a>.</p>
 <p>Light-Pipe has one non-standard Python dependency, the <a href="https://gdal.org/"><code>osgeo</code></a> library, which is released under an MIT style open source license by <a href="https://www.osgeo.org/">The Open Source Geospatial Foundation</a>.</p>
 <h2 id="python-api-guidelines">Python API Guidelines</h2>
 <p>The following is a list of guidelines which this package follows:</p>
@@ -49,7 +49,7 @@
 <p>The key abstraction which Light-Pipe presents is the <code>LightPipeline</code> class. Each <code>LightPipeline</code> instance is associated with one or more <code>SampleProcessor</code> instances, each of which defines an operation to be performed on the provided data. The user provides a sequence of <code>SampleProcessor</code>s to a <code>LightPipeline</code> instance which will execute them in order.</p>
 </li>
 <li>
-<p><code>SampleProcessor</code> instances define the operations performed by a <code>LightPipeline</code> on user-provided data and are therefore the basic building blocks of <code>LightPipeline</code>s. Model training or deployment may be incorporated into a <code>LightPipeline</code> by passing a <code>Callable</code> to a <code>SampleProcessor</code> instance or by creating a user-defined subclass of <code>SampleProcessor</code> which performs the desired operations. <code>SampleProcessor</code> is used along with a <code>ConcurrencyHandler</code> instance to deploy a user-provided <code>Callable</code>, optionally wrapped with one or more user-provided wrapper <code>Callable</code>s, in a concurrent manner. Each <code>SampleProcessor</code> instance is itself associated with a <code>ConcurrencyHandler</code> which does exactly what its name suggests: it handles the minutiae of concurrency so that the user doesn't have to. This means that operations associated with <code>SampleProcessor</code>s may be scaled automatically, as required by the user.</p>
+<p><code>SampleProcessor</code> instances define the operations performed by a <code>LightPipeline</code> on user-provided data and are therefore the basic building blocks of <code>LightPipeline</code>s. Model training or deployment may be incorporated into a <code>LightPipeline</code> by passing a <code>Callable</code> to a <code>SampleProcessor</code> instance or by creating a user-defined subclass of <code>SampleProcessor</code> which performs the desired operations. <code>SampleProcessor</code> is used along with a <code>ConcurrencyHandler</code> instance to deploy a user-provided <code>Callable</code>, optionally wrapped with one or more user-provided wrapper <code>Callable</code>s, in a concurrent manner. Each <code>SampleProcessor</code> instance is itself associated with a <code>ConcurrencyHandler</code> which does exactly what its name suggests: it handles the technicalities of concurrency so that the user doesn't have to. This means that operations associated with <code>SampleProcessor</code>s may be scaled automatically, as required by the user.</p>
 </li>
 <li>
 <p>The <code>ConcurrencyHandler</code> interface consists of two methods, <code>fork</code> and <code>join</code>, names which coincide with their traditional interpretation in <a href="https://en.wikipedia.org/wiki/Fork%E2%80%93join_model">parallel programming contexts</a>. <code>fork</code> operations may be nested recursively, and instances of different <code>ConcurrencyHandler</code> subclasses may be mixed and matched to achieve the desired approach to concurrency (for example, calls to the <code>fork</code> method of a <code>ThreadPoolHandler</code> instance may be nested within calls to the <code>fork</code> method of a <code>ProcessPoolHandler</code> instance). To do so, the user may define custom subclasses of <code>ConcurrencyHandler</code>.</p>
@@ -61,7 +61,7 @@
 <p><code>LightPipeSample</code> supports tile generation, which allows for the reading of subarrays of larger raster data arrays. It also allows for the reading of entire sample arrays. Each tile is associated with a <code>Tile</code> instance from which NumPy arrays may be accessed during training or deployment.</p>
 </li>
 <li>
-<p><code>SampleProcessor</code> instances are designed to ensure that samples are produced and operated on in a manner which is consistent with the requirements imposed by the provided <code>ConcurrencyHandler</code> instance. For example, <code>concurrent.futures</code> requires that objects passed to a <code>ProcessPoolExecutor</code> are pickleable. In practice this means that generator objects and <code>osgeo.gdal.Dataset</code> instances cannot be passed into or out of a <code>ProcessPoolExecutor</code>, and therefore sample processors must ensure that such objects are neither passed nor returned from processing functions when the <code>ProcessPoolHandler</code> is used.</p>
+<p><code>SampleProcessor</code> instances are designed to ensure that samples are produced and operated on in a manner which is consistent with the requirements imposed by the provided <code>ConcurrencyHandler</code> instance. For example, <code>concurrent.futures</code> requires that objects passed to a <code>ProcessPoolExecutor</code> are <a href="https://docs.python.org/3/library/pickle.html">serializable</a>. In practice this means that generator objects and <code>osgeo.gdal.Dataset</code> instances cannot be passed into or out of a <code>ProcessPoolExecutor</code>, and therefore sample processors must ensure that such objects are neither passed nor returned from processing functions when the <code>ProcessPoolHandler</code> is used.</p>
 </li>
 <li>
 <p>Every operation which can be performed <a href="https://en.wikipedia.org/wiki/Lazy_evaluation">lazily</a> without violating the other guidelines listed here is done so.</p>
@@ -88,13 +88,13 @@ __version__ = &#39;0.1&#39;
 
 __doc__ = &#34;&#34;&#34;
 
-# Light-Pipe
+# [Light-Pipe](https://github.com/rcorrero/light-pipe)
 
 ---
 
 ## Overview
 
-Light-Pipe is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce, and facilitate interaction with, training data in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+[Light-Pipe](https://www.light-pipe.io/) is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
 Light-Pipe has one non-standard Python dependency, the [`osgeo`](https://gdal.org/) library, which is released under an MIT style open source license by [The Open Source Geospatial Foundation](https://www.osgeo.org/).
 
@@ -114,7 +114,7 @@ The following is a list of guidelines which this package follows:
 
 6. The key abstraction which Light-Pipe presents is the `LightPipeline` class. Each `LightPipeline` instance is associated with one or more `SampleProcessor` instances, each of which defines an operation to be performed on the provided data. The user provides a sequence of `SampleProcessor`s to a `LightPipeline` instance which will execute them in order.
 
-7. `SampleProcessor` instances define the operations performed by a `LightPipeline` on user-provided data and are therefore the basic building blocks of `LightPipeline`s. Model training or deployment may be incorporated into a `LightPipeline` by passing a `Callable` to a `SampleProcessor` instance or by creating a user-defined subclass of `SampleProcessor` which performs the desired operations. `SampleProcessor` is used along with a `ConcurrencyHandler` instance to deploy a user-provided `Callable`, optionally wrapped with one or more user-provided wrapper `Callable`s, in a concurrent manner. Each `SampleProcessor` instance is itself associated with a `ConcurrencyHandler` which does exactly what its name suggests: it handles the minutiae of concurrency so that the user doesn&#39;t have to. This means that operations associated with `SampleProcessor`s may be scaled automatically, as required by the user.
+7. `SampleProcessor` instances define the operations performed by a `LightPipeline` on user-provided data and are therefore the basic building blocks of `LightPipeline`s. Model training or deployment may be incorporated into a `LightPipeline` by passing a `Callable` to a `SampleProcessor` instance or by creating a user-defined subclass of `SampleProcessor` which performs the desired operations. `SampleProcessor` is used along with a `ConcurrencyHandler` instance to deploy a user-provided `Callable`, optionally wrapped with one or more user-provided wrapper `Callable`s, in a concurrent manner. Each `SampleProcessor` instance is itself associated with a `ConcurrencyHandler` which does exactly what its name suggests: it handles the technicalities of concurrency so that the user doesn&#39;t have to. This means that operations associated with `SampleProcessor`s may be scaled automatically, as required by the user.
 
 8. The `ConcurrencyHandler` interface consists of two methods, `fork` and `join`, names which coincide with their traditional interpretation in [parallel programming contexts](https://en.wikipedia.org/wiki/Fork%E2%80%93join_model). `fork` operations may be nested recursively, and instances of different `ConcurrencyHandler` subclasses may be mixed and matched to achieve the desired approach to concurrency (for example, calls to the `fork` method of a `ThreadPoolHandler` instance may be nested within calls to the `fork` method of a `ProcessPoolHandler` instance). To do so, the user may define custom subclasses of `ConcurrencyHandler`.
 
@@ -122,7 +122,7 @@ The following is a list of guidelines which this package follows:
 
 10. `LightPipeSample` supports tile generation, which allows for the reading of subarrays of larger raster data arrays. It also allows for the reading of entire sample arrays. Each tile is associated with a `Tile` instance from which NumPy arrays may be accessed during training or deployment.
 
-11. `SampleProcessor` instances are designed to ensure that samples are produced and operated on in a manner which is consistent with the requirements imposed by the provided `ConcurrencyHandler` instance. For example, `concurrent.futures` requires that objects passed to a `ProcessPoolExecutor` are pickleable. In practice this means that generator objects and `osgeo.gdal.Dataset` instances cannot be passed into or out of a `ProcessPoolExecutor`, and therefore sample processors must ensure that such objects are neither passed nor returned from processing functions when the `ProcessPoolHandler` is used.
+11. `SampleProcessor` instances are designed to ensure that samples are produced and operated on in a manner which is consistent with the requirements imposed by the provided `ConcurrencyHandler` instance. For example, `concurrent.futures` requires that objects passed to a `ProcessPoolExecutor` are [serializable](https://docs.python.org/3/library/pickle.html). In practice this means that generator objects and `osgeo.gdal.Dataset` instances cannot be passed into or out of a `ProcessPoolExecutor`, and therefore sample processors must ensure that such objects are neither passed nor returned from processing functions when the `ProcessPoolHandler` is used.
 
 12. Every operation which can be performed [lazily](https://en.wikipedia.org/wiki/Lazy_evaluation) without violating the other guidelines listed here is done so.
 
