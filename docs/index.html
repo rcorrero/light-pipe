@@ -25,7 +25,7 @@
 <h1 id="light-pipe"><a href="https://github.com/rcorrero/light-pipe">Light-Pipe</a></h1>
 <hr>
 <h2 id="overview">Overview</h2>
-<p><a href="https://www.light-pipe.io/">Light-Pipe</a> is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD 3-Clause License</a>.</p>
+<p><a href="https://www.light-pipe.io/">Light-Pipe</a> is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy trained models at scale. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD 3-Clause License</a>.</p>
 <p>Light-Pipe has one non-standard Python dependency, the <a href="https://gdal.org/"><code>osgeo</code></a> library, which is released under an MIT style open source license by <a href="https://www.osgeo.org/">The Open Source Geospatial Foundation</a>.</p>
 <h2 id="python-api-guidelines">Python API Guidelines</h2>
 <p>The following is a list of guidelines which this package follows:</p>
@@ -58,7 +58,7 @@
 <p><code>SampleMaker</code> (a subclass of <code>SampleProcessor</code>) and its subclasses may be used to create <code>LightPipeSample</code> instances. These support key operations such as automatic raster tiling and the saving of user-created data in a georeferenced manner. <code>SampleMaker</code> defines the sequence of operations necessary to produce samples from input files in a concurrent manner (as defined by the supplied <code>ConcurrencyHandler</code> instance).</p>
 </li>
 <li>
-<p><code>LightPipeSample</code> supports tile generation, which allows for the reading of subarrays of larger raster data arrays. It also allows for the reading of entire sample arrays. Each tile is associated with a <code>Tile</code> instance from which NumPy arrays may be accessed during training or deployment.</p>
+<p><code>LightPipeSample</code> supports tile generation, which allows for the reading of sub-arrays of larger raster data arrays. It also allows for the reading of entire sample arrays. Each tile is associated with a <code>Tile</code> instance from which NumPy arrays may be accessed during training or deployment.</p>
 </li>
 <li>
 <p><code>SampleProcessor</code> instances are designed to ensure that samples are produced and operated on in a manner which is consistent with the requirements imposed by the provided <code>ConcurrencyHandler</code> instance. For example, <code>concurrent.futures</code> requires that objects passed to a <code>ProcessPoolExecutor</code> are <a href="https://docs.python.org/3/library/pickle.html">serializable</a>. In practice this means that generator objects and <code>osgeo.gdal.Dataset</code> instances cannot be passed into or out of a <code>ProcessPoolExecutor</code>, and therefore sample processors must ensure that such objects are neither passed nor returned from processing functions when the <code>ProcessPoolHandler</code> is used.</p>
@@ -76,6 +76,15 @@
 <p>Full support for the <code>osgeo</code> package's virtual file system tools is provided.</p>
 </li>
 </ol>
+<h2 id="more-information">More Information</h2>
+<ul>
+<li>
+<p><a href="https://github.com/rcorrero/light-pipe">GitHub</a></p>
+</li>
+<li>
+<p><a href="https://www.light-pipe.io/">Documentation</a></p>
+</li>
+</ul>
 <hr>
 <p>Copyright 2020-2022 <a href="mailto:rcorrero@stanford.edu">Richard Correro</a>.</p>
 <details class="source">
@@ -94,7 +103,7 @@ __doc__ = &#34;&#34;&#34;
 
 ## Overview
 
-[Light-Pipe](https://www.light-pipe.io/) is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy a trained model. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+[Light-Pipe](https://www.light-pipe.io/) is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy trained models at scale. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
 Light-Pipe has one non-standard Python dependency, the [`osgeo`](https://gdal.org/) library, which is released under an MIT style open source license by [The Open Source Geospatial Foundation](https://www.osgeo.org/).
 
@@ -120,7 +129,7 @@ The following is a list of guidelines which this package follows:
 
 9. `SampleMaker` (a subclass of `SampleProcessor`) and its subclasses may be used to create `LightPipeSample` instances. These support key operations such as automatic raster tiling and the saving of user-created data in a georeferenced manner. `SampleMaker` defines the sequence of operations necessary to produce samples from input files in a concurrent manner (as defined by the supplied `ConcurrencyHandler` instance).
 
-10. `LightPipeSample` supports tile generation, which allows for the reading of subarrays of larger raster data arrays. It also allows for the reading of entire sample arrays. Each tile is associated with a `Tile` instance from which NumPy arrays may be accessed during training or deployment.
+10. `LightPipeSample` supports tile generation, which allows for the reading of sub-arrays of larger raster data arrays. It also allows for the reading of entire sample arrays. Each tile is associated with a `Tile` instance from which NumPy arrays may be accessed during training or deployment.
 
 11. `SampleProcessor` instances are designed to ensure that samples are produced and operated on in a manner which is consistent with the requirements imposed by the provided `ConcurrencyHandler` instance. For example, `concurrent.futures` requires that objects passed to a `ProcessPoolExecutor` are [serializable](https://docs.python.org/3/library/pickle.html). In practice this means that generator objects and `osgeo.gdal.Dataset` instances cannot be passed into or out of a `ProcessPoolExecutor`, and therefore sample processors must ensure that such objects are neither passed nor returned from processing functions when the `ProcessPoolHandler` is used.
 
@@ -131,6 +140,12 @@ The following is a list of guidelines which this package follows:
 14. Every IO operation or calculation is done only once in data processing. There are no duplicate operations, and no data is written to disk except by the user&#39;s calling a `LightPipeSample` instance&#39;s `save()` method. Every operation is designed to be as computationally-efficient as possible.
 
 15. Full support for the `osgeo` package&#39;s virtual file system tools is provided.
+
+## More Information
+
+- [GitHub](https://github.com/rcorrero/light-pipe)
+
+- [Documentation](https://www.light-pipe.io/)
 
 ---
 
@@ -200,6 +215,7 @@ arrays from groups of raster datasets. Note: in Light-Pipe, <em>tile</em> refers
 <li><a href="#light-pipe">Light-Pipe</a><ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#python-api-guidelines">Python API Guidelines</a></li>
+<li><a href="#more-information">More Information</a></li>
 </ul>
 </li>
 </ul>
