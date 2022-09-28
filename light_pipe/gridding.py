@@ -37,8 +37,8 @@ class GridCell(mercantile.Tile):
 
 
 @gdal_data_handlers.open_data
-def make_grid_cell_dataset(grid_cell: GridCell,
-    datum: Union[gdal.Dataset, ogr.DataSource], 
+def make_grid_cell_dataset(
+    grid_cell: GridCell, datum: Union[gdal.Dataset, ogr.DataSource], 
     datum_filepath: Optional[str] = None, return_filepaths: Optional[bool] = False,
     is_label: Optional[bool] = False, in_memory: Optional[bool] = True, 
     pixel_x_meters: Optional[float] = 3.0, 
@@ -119,7 +119,7 @@ def make_grid_cell_dataset(grid_cell: GridCell,
     item_metadata = {**kwargs, **metadata, "args":args}
     if return_filepaths:
         return qkey, (grid_cell_filepath, is_label, item_metadata)
-    return qkey, (grid_cell_dataset, is_label, item_metadata)
+    return qkey, (grid_cell_dataset, is_label, item_metadata)            
 
 
 def get_grid_cells_from_dataset(

@@ -33,7 +33,7 @@ def main():
             pred = get_pred(tile.y)
             preds.append(pred)
 
-        savepath = get_savepath(sample.uid)
+        savepath = get_savepath(sample.data.uid)
         preds = np.array(preds)
         sample.save(savepath, preds) 
 

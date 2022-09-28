@@ -81,4 +81,4 @@ def close_data(f):
                 del(data_val)  
                 kwargs[data_arg] = None         
         return res
-    return close_data_wrapper
+    return close_data_wrapper   

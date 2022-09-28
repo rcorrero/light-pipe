@@ -45,10 +45,19 @@ from osgeo import gdal, ogr
 gdal.UseExceptions()
 ogr.UseExceptions()
 
+VECTOR_FILEPATH_EXTENSIONS = [&#34;.shp&#34;, &#34;.geojson&#34;]
+
 
 def file_is_a(filepath, extension) -&gt; bool:
     _, filepath_extension = os.path.splitext(filepath)
     return filepath_extension == extension
+
+
+def file_is_a_vector_file(filepath, vector_extensions = VECTOR_FILEPATH_EXTENSIONS):
+    for ext in vector_extensions:
+        if file_is_a(filepath, ext):
+            return True
+    return False
 
 
 def remove(path, *args, **kwargs):
@@ -163,6 +172,22 @@ def get_grid_cell_filepath(
 <pre><code class="python">def file_is_a(filepath, extension) -&gt; bool:
     _, filepath_extension = os.path.splitext(filepath)
     return filepath_extension == extension</code></pre>
+</details>
+</dd>
+<dt id="light_pipe.raster_io.file_is_a_vector_file"><code class="name flex">
+<span>def <span class="ident">file_is_a_vector_file</span></span>(<span>filepath, vector_extensions=['.shp', '.geojson'])</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def file_is_a_vector_file(filepath, vector_extensions = VECTOR_FILEPATH_EXTENSIONS):
+    for ext in vector_extensions:
+        if file_is_a(filepath, ext):
+            return True
+    return False</code></pre>
 </details>
 </dd>
 <dt id="light_pipe.raster_io.get_descendant_filepath"><code class="name flex">
@@ -340,6 +365,7 @@ def get_grid_cell_filepath(
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="light_pipe.raster_io.file_is_a" href="#light_pipe.raster_io.file_is_a">file_is_a</a></code></li>
+<li><code><a title="light_pipe.raster_io.file_is_a_vector_file" href="#light_pipe.raster_io.file_is_a_vector_file">file_is_a_vector_file</a></code></li>
 <li><code><a title="light_pipe.raster_io.get_descendant_filepath" href="#light_pipe.raster_io.get_descendant_filepath">get_descendant_filepath</a></code></li>
 <li><code><a title="light_pipe.raster_io.get_grid_cell_filepath" href="#light_pipe.raster_io.get_grid_cell_filepath">get_grid_cell_filepath</a></code></li>
 <li><code><a title="light_pipe.raster_io.get_shapefile_attributes" href="#light_pipe.raster_io.get_shapefile_attributes">get_shapefile_attributes</a></code></li>

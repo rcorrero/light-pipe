@@ -16,10 +16,19 @@ from osgeo import gdal, ogr
 gdal.UseExceptions()
 ogr.UseExceptions()
 
+VECTOR_FILEPATH_EXTENSIONS = [".shp", ".geojson"]
+
 
 def file_is_a(filepath, extension) -> bool:
     _, filepath_extension = os.path.splitext(filepath)
     return filepath_extension == extension
+
+
+def file_is_a_vector_file(filepath, vector_extensions = VECTOR_FILEPATH_EXTENSIONS):
+    for ext in vector_extensions:
+        if file_is_a(filepath, ext):
+            return True
+    return False
 
 
 def remove(path, *args, **kwargs):

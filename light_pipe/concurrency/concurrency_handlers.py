@@ -3,7 +3,7 @@ __author__ = "Richard Correro (rcorrero@stanford.edu)"
 __doc__ = """
 This module contains the definition of `ConcurrencyHandler`. `ConcurrencyHandler`
 instances are associated with two methods, `fork` and `join`, which are used
-by `SampleHandler` instances to create samples in a concurrent and/or parallel
+by `SampleMaker` instances to create samples in a concurrent and/or parallel
 manner.
 """
 

@@ -125,9 +125,16 @@ class SampleMaker(SampleProcessor):
         )
         for result in results:
             uid, data_tuples = result
-            sample_item = sample.LightPipeSample(
-                uid=uid, data=data_tuples, *args, **kwargs
+            datasets, labels, metadata = list(), list(), list()
+            for tup in data_tuples:
+                datasets.append(tup[0])
+                labels.append(tup[1])
+                metadata.append(tup[2])
+            manifest = sample.SampleManifest(
+                uid=uid, datasets=datasets, labels=labels,
+                metadata=labels
             )
+            sample_item = sample.LightPipeSample(data=manifest)
             if load_samples:
                 sample_item.load()
             yield sample_item  
@@ -139,7 +146,7 @@ class SampleMaker(SampleProcessor):
 
 class GridSampleMaker(SampleMaker):
     def _fork_fn(self, iterable_kwargs, *args, **kwargs):
-        kwargs = {**kwargs, **iterable_kwargs}
+        kwargs = {**kwargs, **iterable_kwargs}           
         grid_cells = gridding.get_grid_cells(*args, **kwargs)
         results = self.join(
             self.fork(
@@ -172,7 +179,8 @@ class GridSampleMaker(SampleMaker):
 
     def make_samples(
         self, iterable: Iterable[dict],
-        zoom: Optional[int] = 14, in_memory: Optional[bool] = None, 
+        zoom: Optional[int] = gridding.DEFAULT_ZOOM, 
+        in_memory: Optional[bool] = None, 
         make_parallelizable: Optional[bool] = None,
         load_samples: Optional[bool] = False, 
         *args, **kwargs
@@ -192,9 +200,16 @@ class GridSampleMaker(SampleMaker):
         ))
         for result in results:
             quad_key, data_tuples = result
-            grid_sample = sample.GridSample(
-                quad_key=quad_key, data=data_tuples, *args, **kwargs
+            datasets, labels, metadata = list(), list(), list()
+            for tup in data_tuples:
+                datasets.append(tup[0])
+                labels.append(tup[1])
+                metadata.append(tup[2])
+            manifest = sample.SampleManifest(
+                uid=quad_key, datasets=datasets, labels=labels,
+                metadata=labels
             )
+            sample_item = sample.LightPipeSample(data=manifest)            
             if load_samples:
-                grid_sample.load()
-            yield grid_sample
+                sample_item.load()
+            yield sample_item
