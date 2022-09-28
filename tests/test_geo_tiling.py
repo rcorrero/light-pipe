@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import time
 
 import matplotlib.pyplot as plt
@@ -12,7 +13,7 @@ gdal.UseExceptions()
 ogr.UseExceptions()
 
 wgs_84_epsg = 4326
-zoom = 18
+zoom = 18 # Determines the size of tiles
 max_workers = 16
 dataset_filepath = './data/big_image.tif'
 # dataset_filepath = './data/image.tif'
@@ -25,6 +26,16 @@ inputs = [
         'is_label': False
     }
 ]
+
+
+def remove(path):
+    """ param <path> could either be relative or absolute. """
+    if os.path.isfile(path) or os.path.islink(path):
+        os.remove(path)  # remove the file
+    elif os.path.isdir(path):
+        shutil.rmtree(path)  # remove dir and all contains
+    else:
+        raise ValueError("file {} is not a file or dir.".format(path))    
 
 
 def test_solaris():
@@ -81,7 +92,6 @@ def test_light_pipe():
     start = time.time()
     ch = concurrency.ThreadPoolHandler(max_workers=max_workers)
     gh = processing.GridSampleMaker(concurrency_handler=ch)
-    # gh = processing.GridSampleMaker()
     pipe = pipeline.LightPipeline(inputs, processors=[gh])
     pipe.run(blocking=True, zoom=zoom)
     for sample in pipe:
@@ -92,6 +102,8 @@ def test_light_pipe():
 
 
 if __name__ == "__main__":
+    if os.path.exists(raster_dest_dir):
+        remove(raster_dest_dir) # Delete images if they already exist
     num_trials = 3
     plt_savepath = "./data/plots/test_geo_tiling.png"
 
@@ -117,6 +129,6 @@ if __name__ == "__main__":
     plt.ylabel("Runtime in Seconds")
     plt.title(f"Comparison of Runtimes When Using Geographic Coordinates")
     for key, val in res.items():
-        plt.plot(x, val, label=key)
+        plt.plot(x, val, linestyle='--', marker='o', label=key)
     plt.legend()
     plt.savefig(plt_savepath)
