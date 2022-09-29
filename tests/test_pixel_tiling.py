@@ -90,7 +90,7 @@ if __name__ == "__main__":
     for key, val in res.items():
         plt.plot(x, val, linestyle='--', marker='o', label=key, color=colors[key])
     plt.yscale('log', base=10)         
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.savefig(plt_savepath)
 
     if os.path.exists(raster_dest_dir):
