@@ -104,7 +104,7 @@ def test_light_pipe():
 if __name__ == "__main__":
     if os.path.exists(raster_dest_dir):
         remove(raster_dest_dir) # Delete images if they already exist
-    num_trials = 3
+    num_trials = 5
     plt_savepath = "./data/plots/test_geo_tiling.png"
 
     tests = [
@@ -112,6 +112,12 @@ if __name__ == "__main__":
         ("rio_tiler", test_rio_tiler),
         ("light_pipe", test_light_pipe)
     ]
+
+    colors = {
+        "solaris": "m",
+        "rio_tiler": "y",
+        "light_pipe": "c" 
+    }
 
     res = {tup[0]: list() for tup in tests}
     num_tests = len(tests)
@@ -126,9 +132,13 @@ if __name__ == "__main__":
 
     x = list(range(num_trials))
     plt.xlabel("Trial Number")
-    plt.ylabel("Runtime in Seconds")
+    plt.ylabel("Runtime in Seconds (Logarithmic Scale)")
     plt.title(f"Comparison of Runtimes When Using Geographic Coordinates")
     for key, val in res.items():
-        plt.plot(x, val, linestyle='--', marker='o', label=key)
+        plt.plot(x, val, linestyle='--', marker='o', label=key, color=colors[key])
+    plt.yscale('log', base=10) 
     plt.legend()
     plt.savefig(plt_savepath)
+
+    if os.path.exists(raster_dest_dir):
+        remove(raster_dest_dir) # Delete images if they already exist
