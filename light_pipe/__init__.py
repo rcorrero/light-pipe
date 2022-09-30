@@ -36,13 +36,13 @@ Below is a chart displaying the runtime (in seconds) for both Light-Pipe and `so
 
 > [_Comparison of Runtimes When Using Pixel Coordinates_](https://github.com/rcorrero/light-pipe/blob/master/data/plots/test_pixel_tiling.png)
 
-These results were generated using [this script](https://github.com/rcorrero/light-pipe/blob/master/tests/test_pixel_tiling.py), which you should test out yourself so that you don't have to take my word for it. These results were obtained on my local machine, which has an AMD Ryzen 5 2600 processor with 16 GB of DDR4 SDRAM and an SDD. Multiple trials were conducted for each method, and the order in which the trials were conducted was randomly-chosen.
+[Here](https://github.com/rcorrero/light-pipe/blob/master/data/tests/test_results/test_pixel_tiling.json) are the recorded runtimes. These results were generated using [this script](https://github.com/rcorrero/light-pipe/blob/master/tests/test_pixel_tiling.py), which you should test out yourself so that you don't have to take my word for it. These results were obtained on my local machine, which has an AMD Ryzen 5 2600 processor with 16 GB of DDR4 SDRAM and an SDD. Multiple trials were conducted for each method, and the order in which the trials were conducted was randomly-chosen.
 
 Next, I tested the performance of the three methods when extracting sub-regions specified in _geographic coordinates_:
 
 > [_Comparison of Runtimes When Using Geographic Coordinates_](https://github.com/rcorrero/light-pipe/blob/master/data/plots/test_geo_tiling.png)
 
-[This script](https://github.com/rcorrero/light-pipe/blob/master/tests/test_geo_tiling.py) was used to obtain these results, and again I performed this test on my local machine.
+[Here](https://github.com/rcorrero/light-pipe/blob/master/data/tests/test_results/test_geo_tiling.json) are the recorded runtimes. [This script](https://github.com/rcorrero/light-pipe/blob/master/tests/test_geo_tiling.py) was used to obtain these results, and again I performed this test on my local machine.
 
 We see that Light-Pipe handily outperforms the alternatives on both tasks. This test is essentially a _worst-case_ test for Light-Pipe, which is designed with concurrency tools which are most useful when processing large numbers of samples. Here we only process a single sample, giving the other two methods the best possible chance. When training a model, and especially when running a model in production, one may need to process thousands or even millions of images, which is where Light-Pipe's concurrency tools make it extremely attractive. 
 
