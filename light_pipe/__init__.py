@@ -10,7 +10,7 @@ __doc__ = """
 
 ## Overview
 
-[Light-Pipe](https://www.light-pipe.io/) is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy trained models at scale. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+[Light-Pipe](https://www.light-pipe.io/) is a open source library that facilitates the development of highly-efficient, massively-scalable geospatial data pipelines for use in machine-learning applications. Light-Pipe can be used during model development to produce and interact with training data in an efficient manner. It may also be used to deploy trained models at scale. A Python API is provided for developers, and command-line utilities for all of the core library operations will be available soon. Light-Pipe is released under a [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause). Light-Pipe is currently under heavy development. Each and every update is liable to break backwards-compatibility.
 
 Light-Pipe has one non-standard Python dependency, the [`osgeo`](https://gdal.org/) library, which is released under an MIT style open source license by [The Open Source Geospatial Foundation](https://www.osgeo.org/).
 

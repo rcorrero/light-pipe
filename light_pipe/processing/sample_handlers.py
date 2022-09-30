@@ -1,7 +1,7 @@
 __author__ = "Richard Correro (rcorrero@stanford.edu)"
 
 __doc__ = """
-This module contains the definition of `SampleHandler` and associated subclasses.
+This module contains the definition of `SampleProcessor` and associated subclasses.
 These contain the definition of the sequence of steps necessary to make samples
 of a specific type. This operation is defined in the `make_samples` method.
 """
