@@ -230,9 +230,9 @@ class LightPipeSample:
             X = tile_array[band_map[False]]
             y = tile_array[band_map[True]]
 
-            if np.allclose(y, 0) and pos_only:
+            if pos_only and np.allclose(y, 0):
                 continue
-            if np.allclose(X, 0) and non_null_only:
+            if non_null_only and np.allclose(X, 0):
                 continue
 
             tile = LightPipeTile(X=X, y=y, band_map=band_map)

@@ -1,9 +1,11 @@
+import json
 import os
 import random
 import shutil
 import time
 
 import matplotlib.pyplot as plt
+import numpy as np
 from light_pipe import concurrency, gridding, mercantile, pipeline, processing
 from osgeo import gdal, ogr
 from rio_tiler.io import COGReader
@@ -106,20 +108,17 @@ if __name__ == "__main__":
         remove(raster_dest_dir) # Delete images if they already exist
     num_trials = 5
     plt_savepath = "./data/plots/test_geo_tiling.png"
+    results_savepath = "./data/tests/test_results/test_geo_tiling.json"
 
     tests = [
         ("solaris", test_solaris),
-        ("rio_tiler", test_rio_tiler),
-        ("light_pipe", test_light_pipe)
+        ("rio-tiler", test_rio_tiler),
+        ("light-pipe", test_light_pipe)
     ]
 
-    colors = {
-        "solaris": "m",
-        "rio_tiler": "y",
-        "light_pipe": "c" 
-    }
+    test_names = [tup[0] for tup in tests]
 
-    res = {tup[0]: list() for tup in tests}
+    res = {test_name: list() for test_name in test_names}
     num_tests = len(tests)
     ids = list(range(num_tests))
 
@@ -130,14 +129,18 @@ if __name__ == "__main__":
             run_time = test()
             res[test_name].append(run_time)
 
+    with open(results_savepath, 'w') as f:
+        json.dump(res, f, sort_keys=True, indent=4)
+
+    res_arr = np.array([res[test_name] for test_name in test_names]).T
+
     x = list(range(num_trials))
-    plt.xlabel("Trial Number")
+    plt.xlabel("Method")
     plt.ylabel("Runtime in Seconds (Logarithmic Scale)")
     plt.title(f"Comparison of Runtimes When Using Geographic Coordinates")
-    for key, val in res.items():
-        plt.plot(x, val, linestyle='--', marker='o', label=key, color=colors[key])
+    plt.boxplot(res_arr, labels=test_names)
     plt.yscale('log', base=10) 
-    plt.legend(loc="upper left")
+    # plt.legend(loc="upper left")
     plt.savefig(plt_savepath)
 
     if os.path.exists(raster_dest_dir):
