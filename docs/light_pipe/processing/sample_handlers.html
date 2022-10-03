@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>light_pipe.processing.sample_handlers API documentation</title>
+<meta name="description" content="This module contains the definition of `SampleProcessor` and associated subclasses.
+These contain the definition of the sequence of steps necessary to …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>light_pipe.processing.sample_handlers</code></h1>
+</header>
+<section id="section-intro">
+<p>This module contains the definition of <code><a title="light_pipe.processing.sample_handlers.SampleProcessor" href="#light_pipe.processing.sample_handlers.SampleProcessor">SampleProcessor</a></code> and associated subclasses.
+These contain the definition of the sequence of steps necessary to make samples
+of a specific type. This operation is defined in the <code>make_samples</code> method.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">__author__ = &#34;Richard Correro (rcorrero@stanford.edu)&#34;
+
+__doc__ = &#34;&#34;&#34;
+This module contains the definition of `SampleProcessor` and associated subclasses.
+These contain the definition of the sequence of steps necessary to make samples
+of a specific type. This operation is defined in the `make_samples` method.
+&#34;&#34;&#34;
+
+
+from typing import Callable, Generator, Iterable, Optional, Sequence
+
+from light_pipe import concurrency, gridding, raster_trans
+from light_pipe.processing import sample
+
+
+class SampleProcessor:
+    def __init__(
+        self, fn: Optional[Callable] = None, 
+        wrappers: Optional[Sequence[Callable]] = None,
+        concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
+        fork: Optional[Callable] = None, join: Optional[Callable] = None,
+        make_parallelizable: Optional[bool] = None
+    ):
+        if wrappers is not None:
+            for wrapper in wrappers:
+                fn = wrapper(fn)
+        self.fn = fn
+        self.wrappers = wrappers
+        if fork is not None and join is not None:
+            self.fork = fork
+            self.join = join
+        elif concurrency_handler is None:
+            concurrency_handler = concurrency.ConcurrencyHandler
+            self.fork = concurrency_handler.fork
+            self.join = concurrency_handler.join
+        else:
+            self.fork = concurrency_handler.fork
+            self.join = concurrency_handler.join
+        if make_parallelizable is None:
+            if concurrency_handler is not None:
+                make_parallelizable = concurrency_handler.parallel
+            else:
+                make_parallelizable = False
+        self.make_parallelizable = make_parallelizable
+
+
+    def run(
+        self, iterable: Iterable, fn: Optional[Callable] = None, *args, **kwargs
+    ) -&gt; Generator:
+        if fn is None:
+            fn = self.fn
+        results = self.join(
+            self.fork(f=fn, iterable=iterable, *args, **kwargs)
+        )
+        yield from results
+
+
+    def set_concurrency(self, concurrency_handler: concurrency.ConcurrencyHandler):
+        self.fork = concurrency_handler.fork
+        self.join = concurrency_handler.join
+        return self
+
+
+class SampleMaker(SampleProcessor):
+    def __init__(
+        self, fn: Optional[Callable] = None,
+        concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
+        in_memory: Optional[bool] = True, 
+        make_parallelizable: Optional[bool] = None, *args, **kwargs
+    ):
+        if make_parallelizable is None:
+            if concurrency_handler is not None:
+                make_parallelizable = concurrency_handler.parallel
+            else:
+                make_parallelizable = False
+        if fn is None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        self.make_parallelizable = make_parallelizable
+        kwargs = {
+            **kwargs, 
+            &#34;fn&#34;:fn,
+            &#34;concurrency_handler&#34;: concurrency_handler,
+            &#34;make_parallelizable&#34;: make_parallelizable
+        }
+        super().__init__(*args, **kwargs)
+        self.in_memory = in_memory
+
+
+    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+        kwargs = {**kwargs, **iterable_kwargs}
+        return raster_trans.rasterize_datasources(*args, **kwargs)
+
+
+    def _fork_fn_no_gen(self, iterable_kwargs, in_memory, *args, **kwargs):
+        assert not in_memory, \
+            &#34;Cannot parallelize when `in_memory = True`.&#34;
+        kwargs = {**kwargs, **iterable_kwargs}
+
+        results = raster_trans.rasterize_datasources(
+            in_memory=in_memory, return_filepaths=True, *args, **kwargs
+        )
+        results_list = [res for res in results]
+        return results_list
+
+
+    def make_samples(
+        self, iterable: Iterable, in_memory: Optional[bool] = None, 
+        make_parallelizable: Optional[bool] = None,
+        load_samples: Optional[bool] = False, *args, **kwargs
+    ) -&gt; Generator:
+        if in_memory is None:
+            in_memory = self.in_memory
+        if make_parallelizable is not None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        else:
+            fn = self.fn            
+        results = super().run(
+            iterable=iterable, fn=fn, in_memory=in_memory, *args, **kwargs
+        )
+        for result in results:
+            uid, data_tuples = result
+            datasets, labels, metadata = list(), list(), list()
+            for tup in data_tuples:
+                datasets.append(tup[0])
+                labels.append(tup[1])
+                metadata.append(tup[2])
+            manifest = sample.SampleManifest(
+                uid=uid, datasets=datasets, labels=labels,
+                metadata=labels
+            )
+            sample_item = sample.LightPipeSample(data=manifest)
+            if load_samples:
+                sample_item.load()
+            yield sample_item  
+
+    
+    def run(self, *args, **kwargs):
+        return self.make_samples(*args, **kwargs)
+
+
+class GridSampleMaker(SampleMaker):
+    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+        kwargs = {**kwargs, **iterable_kwargs}           
+        grid_cells = gridding.get_grid_cells(*args, **kwargs)
+        results = self.join(
+            self.fork(
+                f=gridding.make_grid_cell_dataset, iterable=grid_cells,
+                *args, **kwargs
+                )
+            )
+        for qkey, data_list in results:
+            for data in data_list:
+                yield qkey, data
+
+
+    def _fork_fn_no_gen(self, iterable_kwargs, in_memory, *args, **kwargs):
+        assert not in_memory, \
+            &#34;Cannot parallelize when `in_memory = True`.&#34;
+        kwargs = {**kwargs, **iterable_kwargs}
+        grid_cells = gridding.get_grid_cells(*args, **kwargs)
+        results = self.join(
+            self.fork(
+                f=gridding.make_grid_cell_dataset, iterable=grid_cells,
+                in_memory=in_memory, return_filepaths=True, *args, **kwargs
+            )
+        )
+        results_list = list()
+        for qkey, data_list in results:
+            for data in data_list:
+                results_list.append((qkey, data))
+        return results_list
+
+
+    def make_samples(
+        self, iterable: Iterable[dict],
+        zoom: Optional[int] = gridding.DEFAULT_ZOOM, 
+        in_memory: Optional[bool] = None, 
+        make_parallelizable: Optional[bool] = None,
+        load_samples: Optional[bool] = False, 
+        *args, **kwargs
+    ) -&gt; Generator:
+        if in_memory is None:
+            in_memory = self.in_memory
+        if make_parallelizable is not None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        else:
+            fn = self.fn
+        results = self.join(self.fork(
+            fn, iterable, zoom=zoom,
+            in_memory=in_memory, *args, **kwargs
+        ))
+        for result in results:
+            quad_key, data_tuples = result
+            datasets, labels, metadata = list(), list(), list()
+            for tup in data_tuples:
+                datasets.append(tup[0])
+                labels.append(tup[1])
+                metadata.append(tup[2])
+            manifest = sample.SampleManifest(
+                uid=quad_key, datasets=datasets, labels=labels,
+                metadata=labels
+            )
+            sample_item = sample.LightPipeSample(data=manifest)            
+            if load_samples:
+                sample_item.load()
+            yield sample_item</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="light_pipe.processing.sample_handlers.GridSampleMaker"><code class="flex name class">
+<span>class <span class="ident">GridSampleMaker</span></span>
+<span>(</span><span>fn: Optional[Callable] = None, concurrency_handler: Optional[<a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="../concurrency/concurrency_handlers.html#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a>] = None, in_memory: Optional[bool] = True, make_parallelizable: Optional[bool] = None, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class GridSampleMaker(SampleMaker):
+    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+        kwargs = {**kwargs, **iterable_kwargs}           
+        grid_cells = gridding.get_grid_cells(*args, **kwargs)
+        results = self.join(
+            self.fork(
+                f=gridding.make_grid_cell_dataset, iterable=grid_cells,
+                *args, **kwargs
+                )
+            )
+        for qkey, data_list in results:
+            for data in data_list:
+                yield qkey, data
+
+
+    def _fork_fn_no_gen(self, iterable_kwargs, in_memory, *args, **kwargs):
+        assert not in_memory, \
+            &#34;Cannot parallelize when `in_memory = True`.&#34;
+        kwargs = {**kwargs, **iterable_kwargs}
+        grid_cells = gridding.get_grid_cells(*args, **kwargs)
+        results = self.join(
+            self.fork(
+                f=gridding.make_grid_cell_dataset, iterable=grid_cells,
+                in_memory=in_memory, return_filepaths=True, *args, **kwargs
+            )
+        )
+        results_list = list()
+        for qkey, data_list in results:
+            for data in data_list:
+                results_list.append((qkey, data))
+        return results_list
+
+
+    def make_samples(
+        self, iterable: Iterable[dict],
+        zoom: Optional[int] = gridding.DEFAULT_ZOOM, 
+        in_memory: Optional[bool] = None, 
+        make_parallelizable: Optional[bool] = None,
+        load_samples: Optional[bool] = False, 
+        *args, **kwargs
+    ) -&gt; Generator:
+        if in_memory is None:
+            in_memory = self.in_memory
+        if make_parallelizable is not None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        else:
+            fn = self.fn
+        results = self.join(self.fork(
+            fn, iterable, zoom=zoom,
+            in_memory=in_memory, *args, **kwargs
+        ))
+        for result in results:
+            quad_key, data_tuples = result
+            datasets, labels, metadata = list(), list(), list()
+            for tup in data_tuples:
+                datasets.append(tup[0])
+                labels.append(tup[1])
+                metadata.append(tup[2])
+            manifest = sample.SampleManifest(
+                uid=quad_key, datasets=datasets, labels=labels,
+                metadata=labels
+            )
+            sample_item = sample.LightPipeSample(data=manifest)            
+            if load_samples:
+                sample_item.load()
+            yield sample_item</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="light_pipe.processing.sample_handlers.SampleMaker" href="#light_pipe.processing.sample_handlers.SampleMaker">SampleMaker</a></li>
+<li><a title="light_pipe.processing.sample_handlers.SampleProcessor" href="#light_pipe.processing.sample_handlers.SampleProcessor">SampleProcessor</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="light_pipe.processing.sample_handlers.GridSampleMaker.make_samples"><code class="name flex">
+<span>def <span class="ident">make_samples</span></span>(<span>self, iterable: Iterable[dict], zoom: Optional[int] = 16, in_memory: Optional[bool] = None, make_parallelizable: Optional[bool] = None, load_samples: Optional[bool] = False, *args, **kwargs) ‑> Generator</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_samples(
+    self, iterable: Iterable[dict],
+    zoom: Optional[int] = gridding.DEFAULT_ZOOM, 
+    in_memory: Optional[bool] = None, 
+    make_parallelizable: Optional[bool] = None,
+    load_samples: Optional[bool] = False, 
+    *args, **kwargs
+) -&gt; Generator:
+    if in_memory is None:
+        in_memory = self.in_memory
+    if make_parallelizable is not None:
+        if make_parallelizable:
+            fn = self._fork_fn_no_gen
+        else:
+            fn = self._fork_fn
+    else:
+        fn = self.fn
+    results = self.join(self.fork(
+        fn, iterable, zoom=zoom,
+        in_memory=in_memory, *args, **kwargs
+    ))
+    for result in results:
+        quad_key, data_tuples = result
+        datasets, labels, metadata = list(), list(), list()
+        for tup in data_tuples:
+            datasets.append(tup[0])
+            labels.append(tup[1])
+            metadata.append(tup[2])
+        manifest = sample.SampleManifest(
+            uid=quad_key, datasets=datasets, labels=labels,
+            metadata=labels
+        )
+        sample_item = sample.LightPipeSample(data=manifest)            
+        if load_samples:
+            sample_item.load()
+        yield sample_item</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="light_pipe.processing.sample_handlers.SampleMaker"><code class="flex name class">
+<span>class <span class="ident">SampleMaker</span></span>
+<span>(</span><span>fn: Optional[Callable] = None, concurrency_handler: Optional[<a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="../concurrency/concurrency_handlers.html#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a>] = None, in_memory: Optional[bool] = True, make_parallelizable: Optional[bool] = None, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SampleMaker(SampleProcessor):
+    def __init__(
+        self, fn: Optional[Callable] = None,
+        concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
+        in_memory: Optional[bool] = True, 
+        make_parallelizable: Optional[bool] = None, *args, **kwargs
+    ):
+        if make_parallelizable is None:
+            if concurrency_handler is not None:
+                make_parallelizable = concurrency_handler.parallel
+            else:
+                make_parallelizable = False
+        if fn is None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        self.make_parallelizable = make_parallelizable
+        kwargs = {
+            **kwargs, 
+            &#34;fn&#34;:fn,
+            &#34;concurrency_handler&#34;: concurrency_handler,
+            &#34;make_parallelizable&#34;: make_parallelizable
+        }
+        super().__init__(*args, **kwargs)
+        self.in_memory = in_memory
+
+
+    def _fork_fn(self, iterable_kwargs, *args, **kwargs):
+        kwargs = {**kwargs, **iterable_kwargs}
+        return raster_trans.rasterize_datasources(*args, **kwargs)
+
+
+    def _fork_fn_no_gen(self, iterable_kwargs, in_memory, *args, **kwargs):
+        assert not in_memory, \
+            &#34;Cannot parallelize when `in_memory = True`.&#34;
+        kwargs = {**kwargs, **iterable_kwargs}
+
+        results = raster_trans.rasterize_datasources(
+            in_memory=in_memory, return_filepaths=True, *args, **kwargs
+        )
+        results_list = [res for res in results]
+        return results_list
+
+
+    def make_samples(
+        self, iterable: Iterable, in_memory: Optional[bool] = None, 
+        make_parallelizable: Optional[bool] = None,
+        load_samples: Optional[bool] = False, *args, **kwargs
+    ) -&gt; Generator:
+        if in_memory is None:
+            in_memory = self.in_memory
+        if make_parallelizable is not None:
+            if make_parallelizable:
+                fn = self._fork_fn_no_gen
+            else:
+                fn = self._fork_fn
+        else:
+            fn = self.fn            
+        results = super().run(
+            iterable=iterable, fn=fn, in_memory=in_memory, *args, **kwargs
+        )
+        for result in results:
+            uid, data_tuples = result
+            datasets, labels, metadata = list(), list(), list()
+            for tup in data_tuples:
+                datasets.append(tup[0])
+                labels.append(tup[1])
+                metadata.append(tup[2])
+            manifest = sample.SampleManifest(
+                uid=uid, datasets=datasets, labels=labels,
+                metadata=labels
+            )
+            sample_item = sample.LightPipeSample(data=manifest)
+            if load_samples:
+                sample_item.load()
+            yield sample_item  
+
+    
+    def run(self, *args, **kwargs):
+        return self.make_samples(*args, **kwargs)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="light_pipe.processing.sample_handlers.SampleProcessor" href="#light_pipe.processing.sample_handlers.SampleProcessor">SampleProcessor</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="light_pipe.processing.sample_handlers.GridSampleMaker" href="#light_pipe.processing.sample_handlers.GridSampleMaker">GridSampleMaker</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="light_pipe.processing.sample_handlers.SampleMaker.make_samples"><code class="name flex">
+<span>def <span class="ident">make_samples</span></span>(<span>self, iterable: Iterable, in_memory: Optional[bool] = None, make_parallelizable: Optional[bool] = None, load_samples: Optional[bool] = False, *args, **kwargs) ‑> Generator</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_samples(
+    self, iterable: Iterable, in_memory: Optional[bool] = None, 
+    make_parallelizable: Optional[bool] = None,
+    load_samples: Optional[bool] = False, *args, **kwargs
+) -&gt; Generator:
+    if in_memory is None:
+        in_memory = self.in_memory
+    if make_parallelizable is not None:
+        if make_parallelizable:
+            fn = self._fork_fn_no_gen
+        else:
+            fn = self._fork_fn
+    else:
+        fn = self.fn            
+    results = super().run(
+        iterable=iterable, fn=fn, in_memory=in_memory, *args, **kwargs
+    )
+    for result in results:
+        uid, data_tuples = result
+        datasets, labels, metadata = list(), list(), list()
+        for tup in data_tuples:
+            datasets.append(tup[0])
+            labels.append(tup[1])
+            metadata.append(tup[2])
+        manifest = sample.SampleManifest(
+            uid=uid, datasets=datasets, labels=labels,
+            metadata=labels
+        )
+        sample_item = sample.LightPipeSample(data=manifest)
+        if load_samples:
+            sample_item.load()
+        yield sample_item  </code></pre>
+</details>
+</dd>
+<dt id="light_pipe.processing.sample_handlers.SampleMaker.run"><code class="name flex">
+<span>def <span class="ident">run</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run(self, *args, **kwargs):
+    return self.make_samples(*args, **kwargs)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="light_pipe.processing.sample_handlers.SampleProcessor"><code class="flex name class">
+<span>class <span class="ident">SampleProcessor</span></span>
+<span>(</span><span>fn: Optional[Callable] = None, wrappers: Optional[Sequence[Callable]] = None, concurrency_handler: Optional[<a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="../concurrency/concurrency_handlers.html#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a>] = None, fork: Optional[Callable] = None, join: Optional[Callable] = None, make_parallelizable: Optional[bool] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SampleProcessor:
+    def __init__(
+        self, fn: Optional[Callable] = None, 
+        wrappers: Optional[Sequence[Callable]] = None,
+        concurrency_handler: Optional[concurrency.ConcurrencyHandler] = None,
+        fork: Optional[Callable] = None, join: Optional[Callable] = None,
+        make_parallelizable: Optional[bool] = None
+    ):
+        if wrappers is not None:
+            for wrapper in wrappers:
+                fn = wrapper(fn)
+        self.fn = fn
+        self.wrappers = wrappers
+        if fork is not None and join is not None:
+            self.fork = fork
+            self.join = join
+        elif concurrency_handler is None:
+            concurrency_handler = concurrency.ConcurrencyHandler
+            self.fork = concurrency_handler.fork
+            self.join = concurrency_handler.join
+        else:
+            self.fork = concurrency_handler.fork
+            self.join = concurrency_handler.join
+        if make_parallelizable is None:
+            if concurrency_handler is not None:
+                make_parallelizable = concurrency_handler.parallel
+            else:
+                make_parallelizable = False
+        self.make_parallelizable = make_parallelizable
+
+
+    def run(
+        self, iterable: Iterable, fn: Optional[Callable] = None, *args, **kwargs
+    ) -&gt; Generator:
+        if fn is None:
+            fn = self.fn
+        results = self.join(
+            self.fork(f=fn, iterable=iterable, *args, **kwargs)
+        )
+        yield from results
+
+
+    def set_concurrency(self, concurrency_handler: concurrency.ConcurrencyHandler):
+        self.fork = concurrency_handler.fork
+        self.join = concurrency_handler.join
+        return self</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="light_pipe.processing.sample_handlers.SampleMaker" href="#light_pipe.processing.sample_handlers.SampleMaker">SampleMaker</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="light_pipe.processing.sample_handlers.SampleProcessor.run"><code class="name flex">
+<span>def <span class="ident">run</span></span>(<span>self, iterable: Iterable, fn: Optional[Callable] = None, *args, **kwargs) ‑> Generator</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run(
+    self, iterable: Iterable, fn: Optional[Callable] = None, *args, **kwargs
+) -&gt; Generator:
+    if fn is None:
+        fn = self.fn
+    results = self.join(
+        self.fork(f=fn, iterable=iterable, *args, **kwargs)
+    )
+    yield from results</code></pre>
+</details>
+</dd>
+<dt id="light_pipe.processing.sample_handlers.SampleProcessor.set_concurrency"><code class="name flex">
+<span>def <span class="ident">set_concurrency</span></span>(<span>self, concurrency_handler: <a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="../concurrency/concurrency_handlers.html#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_concurrency(self, concurrency_handler: concurrency.ConcurrencyHandler):
+    self.fork = concurrency_handler.fork
+    self.join = concurrency_handler.join
+    return self</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="light_pipe.processing" href="index.html">light_pipe.processing</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="light_pipe.processing.sample_handlers.GridSampleMaker" href="#light_pipe.processing.sample_handlers.GridSampleMaker">GridSampleMaker</a></code></h4>
+<ul class="">
+<li><code><a title="light_pipe.processing.sample_handlers.GridSampleMaker.make_samples" href="#light_pipe.processing.sample_handlers.GridSampleMaker.make_samples">make_samples</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="light_pipe.processing.sample_handlers.SampleMaker" href="#light_pipe.processing.sample_handlers.SampleMaker">SampleMaker</a></code></h4>
+<ul class="">
+<li><code><a title="light_pipe.processing.sample_handlers.SampleMaker.make_samples" href="#light_pipe.processing.sample_handlers.SampleMaker.make_samples">make_samples</a></code></li>
+<li><code><a title="light_pipe.processing.sample_handlers.SampleMaker.run" href="#light_pipe.processing.sample_handlers.SampleMaker.run">run</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="light_pipe.processing.sample_handlers.SampleProcessor" href="#light_pipe.processing.sample_handlers.SampleProcessor">SampleProcessor</a></code></h4>
+<ul class="">
+<li><code><a title="light_pipe.processing.sample_handlers.SampleProcessor.run" href="#light_pipe.processing.sample_handlers.SampleProcessor.run">run</a></code></li>
+<li><code><a title="light_pipe.processing.sample_handlers.SampleProcessor.set_concurrency" href="#light_pipe.processing.sample_handlers.SampleProcessor.set_concurrency">set_concurrency</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
