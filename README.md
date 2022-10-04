@@ -86,4 +86,4 @@ The following is a list of guidelines which this package follows:
 
 ---
 
-Copyright 2020-2022 [Richard Correro](mailto:rcorrero@stanford.edu).
+Copyright 2020-2022 [Richard Correro](https://www.richardcorrero.com/).
