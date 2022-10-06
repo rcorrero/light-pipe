@@ -6,7 +6,7 @@ arbitrarily-aligned imagery. These datasets are particularly useful in settings
 in which time-series of aligned geospatial raster data are useful.
 """
 
-
+import time # REMOVE
 import math
 from typing import Iterable, List, Optional, Union
 
@@ -123,7 +123,7 @@ def make_grid_cell_dataset(
 
 
 def get_grid_cells_from_dataset(
-    dataset: gdal.Dataset, zoom: Optional[int] = 14,
+    dataset: gdal.Dataset, zoom: Optional[int] = DEFAULT_ZOOM,
     dstSRS: Optional[Union[osr.SpatialReference, None]] = None,
     default_dd_epsg: Optional[int] = DEFAULT_DD_EPSG,
     truncate: Optional[bool] = False, *args, **kwargs
@@ -159,7 +159,7 @@ def get_grid_cells_from_dataset(
 
 
 def get_grid_cells_from_datasource(
-    datasource: ogr.DataSource, zoom: Optional[int] = 14,
+    datasource: ogr.DataSource, zoom: Optional[int] = DEFAULT_ZOOM,
     dstSRS: Optional[Union[osr.SpatialReference, None]] = None,
     default_dd_epsg: Optional[int] = DEFAULT_DD_EPSG,    
     truncate: Optional[bool] = False, *args, **kwargs
@@ -169,6 +169,8 @@ def get_grid_cells_from_datasource(
         dstSRS.ImportFromEPSG(default_dd_epsg) 
     n_layers = datasource.GetLayerCount()
     grid_cells = set()
+
+    # @TODO: Add support for concurrency
     for i in range(n_layers):
         layer = datasource.GetLayerByIndex(i)
         srcSRS = layer.GetSpatialRef()
@@ -190,7 +192,7 @@ def get_grid_cells_from_datasource(
 
 @gdal_data_handlers.open_data
 def get_grid_cells(
-    datum, zoom: Optional[int] = 14,
+    datum, zoom: Optional[int] = DEFAULT_ZOOM,
     dstSRS: Optional[Union[osr.SpatialReference, None]] = None,
     default_dd_epsg: Optional[int] = DEFAULT_DD_EPSG,
     truncate: Optional[bool] = False, *args, **kwargs
