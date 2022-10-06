@@ -154,12 +154,11 @@ def get_tiles(
     raster_y = padded.shape[-2]
     raster_x = padded.shape[-1]
     if assert_tile_smaller_than_raster:
-        assert tile_y < raster_y, \
-            f"Tile y size {tile_y} is larger than raster y size."
-        assert tile_x < raster_x, \
-            f"Tile x size {tile_x} is larger than raster x size."
+        assert tile_y <= raster_y, \
+            f"Tile y size {tile_y} is larger than raster y size {raster_y}."
+        assert tile_x <= raster_x, \
+            f"Tile x size {tile_x} is larger than raster x size {raster_x}."
     if tile_coords is None:
-
         tile_coords = get_tile_id_mapping(
             raster_y, raster_x, tile_y, tile_x, row_major, 
             assert_evenly_divisble=True

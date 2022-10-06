@@ -168,7 +168,7 @@ def get_grid_cells_from_datasource(
         dstSRS = osr.SpatialReference()
         dstSRS.ImportFromEPSG(default_dd_epsg) 
     n_layers = datasource.GetLayerCount()
-    grid_cells = []
+    grid_cells = set()
     for i in range(n_layers):
         layer = datasource.GetLayerByIndex(i)
         srcSRS = layer.GetSpatialRef()
@@ -184,7 +184,7 @@ def get_grid_cells_from_datasource(
                 west=minx, south=miny, east=maxx, north=maxy, zooms=zoom,
                 truncate=truncate
             )
-            grid_cells += layer_cells
+            grid_cells.update(layer_cells)
     return grid_cells
 
 
