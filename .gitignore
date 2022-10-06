@@ -4,3 +4,7 @@ _testing/
 _old_code.py
 
 *big_*
+
+Light_Pipe.egg-info/
+build/
+dist/
