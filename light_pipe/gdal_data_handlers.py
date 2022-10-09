@@ -7,6 +7,7 @@ closing.
 
 
 import functools
+import pathlib
 from typing import Optional, Sequence, Union
 
 from osgeo import gdal, ogr
@@ -20,6 +21,28 @@ class UnknownInputError(Exception):
     """
     Raised when a function or method is unsure what to do with an input.
     """
+
+
+class DatasetAdapter:
+    def __init__(
+        self, filepath: Union[str, pathlib.Path], 
+        store_results: Optional[bool] = False
+    ):
+        self.filepath = filepath
+        self.store_results = store_results
+
+        self.arr = None
+
+
+    def ReadAsArray(self):
+        if self.store_results and self.arr is not None:
+            return self.arr
+        dataset = gdal.Open(self.filepath)
+        arr = dataset.ReadAsArray()
+        del dataset
+        if self.store_results:
+            self.arr = arr
+        return arr
 
 
 def merge_data(f):
