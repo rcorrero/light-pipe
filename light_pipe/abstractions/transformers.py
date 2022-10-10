@@ -9,9 +9,12 @@ from light_pipe import abstractions, concurrency
 class Transformer:
     def __init__(
         self, 
-        concurrency: Optional[concurrency.ConcurrencyHandler] = concurrency.ConcurrencyHandler
+        concurrency: Optional[concurrency.ConcurrencyHandler] = concurrency.ConcurrencyHandler,
+        *args, **kwargs
     ):
         self.concurrency = concurrency
+        self.args = args
+        self.kwargs = kwargs
 
 
     @staticmethod
@@ -34,8 +37,8 @@ class Transformer:
 
 
     def transform(self, data: abstractions.Data, *args, **kwargs):
-        decorator = self._make_decorator(*args, **kwargs)
-        data.wrap_generator(decorator, *args, **kwargs)
+        decorator = self._make_decorator(*args, *self.args, **kwargs, **self.kwargs)
+        data.wrap_generator(decorator)
         return data
 
 
