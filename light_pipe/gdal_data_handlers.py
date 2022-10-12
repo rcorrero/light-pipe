@@ -23,28 +23,6 @@ class UnknownInputError(Exception):
     """
 
 
-class DatasetAdapter:
-    def __init__(
-        self, filepath: Union[str, pathlib.Path], 
-        store_results: Optional[bool] = False
-    ):
-        self.filepath = filepath
-        self.store_results = store_results
-
-        self.arr = None
-
-
-    def ReadAsArray(self):
-        if self.store_results and self.arr is not None:
-            return self.arr
-        dataset = gdal.Open(self.filepath)
-        arr = dataset.ReadAsArray()
-        del dataset
-        if self.store_results:
-            self.arr = arr
-        return arr
-
-
 def merge_data(f):
     @functools.wraps(f)
     def merge_data_wrapper(

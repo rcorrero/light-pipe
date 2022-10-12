@@ -6,7 +6,6 @@ arbitrarily-aligned imagery. These datasets are particularly useful in settings
 in which time-series of aligned geospatial raster data are useful.
 """
 
-import time # REMOVE
 import math
 from typing import Iterable, List, Optional, Union
 
