@@ -20,7 +20,6 @@ class GDALAdapter:
         self.filepath = filepath
         self.keep_open = keep_open
 
-        self.uid = self.
         self.data = None
 
 
