@@ -1,10 +1,9 @@
-__pycache__/
-_testing/
+*/__pycache__/*
+*/order/*
+*/samples/*
 
-_old_code.py
+Light_Pipe.egg-info/*
+build/*
+dist/*
 
 *big_*
-
-Light_Pipe.egg-info/
-build/
-dist/
