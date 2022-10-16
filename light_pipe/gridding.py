@@ -46,7 +46,8 @@ def make_grid_cell_dataset(
     light_pipe_quad_key: Optional[str] = LIGHT_PIPE_QUAD_KEY,
     datetime_key: Optional[str] = DATETIME_KEY,
     default_dtype = gdal.GDT_Byte, default_n_bands = 1, 
-    use_ancestor_driver = False,
+    use_ancestor_driver = False, grid_cell_filepath: Optional[str] = None,
+    default_driver_name: Optional[str] = "GTIff",
     *args, **kwargs
 ):
     if datum_filepath is None:
@@ -56,11 +57,10 @@ def make_grid_cell_dataset(
     if in_memory:
         grid_cell_filepath = ""
         default_driver_name = "MEM" 
-    else:
+    elif grid_cell_filepath is None:
         grid_cell_filepath = raster_io.get_grid_cell_filepath(
             ancestor_filepath=datum_filepath, qkey=qkey, directory=out_dir, 
         )
-        default_driver_name = "GTiff"
     pixel_x_meters = abs(pixel_x_meters)
     pixel_y_meters = abs(pixel_y_meters)
     bounds = mercantile.xy_bounds(grid_cell)

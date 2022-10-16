@@ -9,10 +9,12 @@ class Transformer:
 
 
     def __init__(
-        self, 
+        self, transform_item: Optional[Callable] = None,
         parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer,
         *args, **kwargs
     ):
+        if transform_item is not None:
+            self.transform_item = transform_item
         self.parallelizer = parallelizer
         self.args = args
         self.kwargs = kwargs
@@ -32,7 +34,8 @@ class Transformer:
     @staticmethod
     def transform_item(*args, **kwargs):
         raise NotImplementedError(
-            f"This method must be overwritten by subclasses of {Transformer.__name__}."
+            f"Either pass a `Callable` instance to __init__() or overwrite this \
+                method in a subclass of {Transformer.__name__}."
         )
 
 
