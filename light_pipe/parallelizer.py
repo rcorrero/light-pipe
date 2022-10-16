@@ -1,4 +1,4 @@
-from typing import Callable, Generator, Iterable, Optional
+from typing import Callable, Generator, Iterable, Iterator, Optional
 
 from light_pipe import data
 
@@ -12,7 +12,7 @@ class Parallelizer:
         if recurse:
             results = [
                 cls.fork(f, item, *args, recurse=recurse, **kwargs) if \
-                    isinstance(item, data.Data) else \
+                    (isinstance(item, data.Data) or isinstance(item, Iterator)) else \
                     f(item, *args, recurse=recurse, **kwargs) for item in iterable
             ]
         else:

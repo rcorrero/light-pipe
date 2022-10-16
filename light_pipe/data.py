@@ -42,7 +42,7 @@ class Data:
 
     def __iter__(self):
         if self.store_results and self.results is not None:
-            yield from self.results
+            return self.results
         else:
             return self()        
 
@@ -65,5 +65,6 @@ class Data:
         if copy_results and results is None:
             results = self.results
         return self._copy(
-            generator=generator, store_results=store_results, results=results
+           *args, generator=generator, store_results=store_results, 
+           results=results, **kwargs
         )

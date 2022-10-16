@@ -1,5 +1,5 @@
 import functools
-from typing import Callable, Generator, Iterable, Optional
+from typing import Any, Callable, Generator, Iterable, Iterator, Optional
 
 from light_pipe import data, parallelizer
 
@@ -18,32 +18,37 @@ class Transformer:
         self.kwargs = kwargs
 
 
-    @staticmethod
-    def _transformation_fn(input, *args, **kwargs):
-        return input
-
-
-    def _make_decorator(self, *args, **kwargs):
-        def decorator(fn: Callable):
-            @functools.wraps(fn)
-            def wrapper(*wargs, **wkwargs):
-                return self.join(
-                    self.parallelizer.fork(
-                        self._transformation_fn, fn(*wargs, **wkwargs), *args, 
-                        **kwargs,
-                    )
-                )
-            return wrapper
-        return decorator
-
-
     @classmethod
     def join(cls, iterable: Iterable, recurse: Optional[bool] = True) -> Generator:
         for item in iterable:
-            if recurse and isinstance(item, data.Data):
+            if recurse and (
+                isinstance(item, data.Data) or isinstance(item, Iterator)
+            ):
                 yield from cls.join(item, recurse=recurse)
             else:
                 yield item
+
+
+    @staticmethod
+    def transform_item(*args, **kwargs):
+        raise NotImplementedError(
+            f"This method must be overwritten by subclasses of {Transformer.__name__}."
+        )
+
+
+    def _make_decorator(self, *args, recurse: Optional[bool] = True, **kwargs):
+        def decorator(fn: Callable):
+            @functools.wraps(fn)
+            def wrapper(*wargs, **wkwargs):
+                yield from self.join(
+                    self.parallelizer.fork(
+                        self.transform_item, fn(*wargs, **wkwargs), *args, 
+                        **kwargs,
+                    ),
+                    recurse=recurse
+                )
+            return wrapper
+        return decorator
 
 
     def transform(
@@ -62,3 +67,38 @@ class Transformer:
 
     def __ror__(self, data: data.Data):
         return self(data)
+
+
+class Pipeline(Transformer):
+    __name__: str = "Pipeline"
+
+
+    def __init__(
+        self, transformers: Iterable[Transformer],
+        parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer,
+        *args, **kwargs
+    ):
+        self.transformers = transformers
+        self.parallelizer = parallelizer
+        self.args = args
+        self.kwargs = kwargs
+
+
+    def transform_item(self, item: Any, *args, **kwargs):
+        for transformer in self.transformers:
+            item = transformer.transform_item(
+                item, *args, *self.args, **kwargs, **self.kwargs
+            )
+        return item
+
+
+    def transform(
+        self, data: data.Data, *args, return_copy: Optional[bool] = True,
+        **kwargs
+    ) -> data.Data:
+        for transformer in self.transformers:
+            data = transformer.transform(
+                data, *args, return_copy=return_copy, **kwargs,
+            )
+        return data
+    
