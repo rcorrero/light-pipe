@@ -1,9 +1,9 @@
 import pathlib
-from osgeo import ogr, osr, gdal
+from typing import Optional, Union
 
-from typing import Union, Optional
-from light_pipe import mercantile
+from osgeo import gdal, ogr, osr
 
+from light_pipe_geo import mercantile
 
 ogr.UseExceptions()
 osr.UseExceptions()

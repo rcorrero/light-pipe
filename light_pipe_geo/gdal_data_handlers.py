@@ -12,7 +12,7 @@ from typing import Optional, Sequence, Union
 
 from osgeo import gdal, ogr
 
-from light_pipe import raster_io
+from light_pipe_geo import raster_io
 
 DATA_ARGS = ["datum", "dataset", "datasets", "datasource", "datasources"]
 

@@ -12,7 +12,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import numpy as np
 from osgeo import gdal, ogr, osr
 
-from light_pipe import gdal_data_handlers, raster_io, tiling
+from light_pipe_geo import gdal_data_handlers, raster_io, tiling
 
 gdal.UseExceptions()
 ogr.UseExceptions()

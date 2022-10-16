@@ -11,7 +11,8 @@ from typing import Iterable, List, Optional, Union
 
 from osgeo import gdal, ogr, osr
 
-from light_pipe import gdal_data_handlers, mercantile, raster_io, raster_trans
+from light_pipe_geo import (gdal_data_handlers, mercantile, raster_io,
+                            raster_trans)
 
 gdal.UseExceptions()
 ogr.UseExceptions()

@@ -14,7 +14,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 from osgeo import gdal
 
-from light_pipe import gdal_data_handlers
+from light_pipe_geo import gdal_data_handlers
 
 gdal.UseExceptions()
 
