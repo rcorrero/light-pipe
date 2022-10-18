@@ -1,8 +1,7 @@
 import asyncio
 import concurrent.futures
 import functools
-from typing import (AsyncGenerator, Callable, Generator, Iterable, Iterator,
-                    Optional)
+from typing import Callable, Generator, Iterable, Iterator, Optional
 
 from light_pipe import data
 
