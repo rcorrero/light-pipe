@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>light_pipe.concurrency.concurrency_handlers API documentation</title>
-<meta name="description" content="This module contains the definition of `ConcurrencyHandler`. `ConcurrencyHandler`
-instances are associated with two methods, `fork` and `join`, which …" />
+<title>light_pipe.parallelizer API documentation</title>
+<meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -20,65 +19,41 @@ instances are associated with two methods, `fork` and `join`, which …" />
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>light_pipe.concurrency.concurrency_handlers</code></h1>
+<h1 class="title">Module <code>light_pipe.parallelizer</code></h1>
 </header>
 <section id="section-intro">
-<p>This module contains the definition of <code><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a></code>. <code><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a></code>
-instances are associated with two methods, <code>fork</code> and <code>join</code>, which are used
-by <code>SampleMaker</code> instances to create samples in a concurrent and/or parallel
-manner.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">__author__ = &#34;Richard Correro (rcorrero@stanford.edu)&#34;
-
-__doc__ = &#34;&#34;&#34;
-This module contains the definition of `ConcurrencyHandler`. `ConcurrencyHandler`
-instances are associated with two methods, `fork` and `join`, which are used
-by `SampleMaker` instances to create samples in a concurrent and/or parallel
-manner.
-&#34;&#34;&#34;
-
-
+<pre><code class="python">import asyncio
 import concurrent.futures
-from typing import Callable, Generator, Iterable, Optional, Tuple
+import functools
+from typing import Callable, Generator, Iterable, Iterator, Optional
+
+from light_pipe import data
 
 
-class ConcurrencyHandler:
-    parallel: bool = False
-
-
+class Parallelizer:
     @classmethod
-    def fork(cls, f: Callable, iterable: Iterable, *args, **kwargs) -&gt; Generator:
-        results = [
-            f(item, *args, **kwargs) for item in iterable
-        ]
+    def fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -&gt; Generator:
+        if recurse:
+            results = [
+                cls.fork(f, item, *args, recurse=recurse, **kwargs) if \
+                    (isinstance(item, data.Data) or isinstance(item, Iterator)) else \
+                    f(item, *args, **kwargs) for item in iterable
+            ]
+        else:
+            results = [
+                f(item, *args, **kwargs) for item in iterable
+            ]
         yield from results
-        # return results
 
 
-    @classmethod
-    def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
-        results = dict()
-        for item in iterable:
-            if isinstance(item, Generator) or isinstance(item, list):
-                for key, values in cls.join(item):
-                    if key in results.keys():
-                        results[key] += values
-                    else:
-                        results[key] = values
-            else:
-                key, value = item
-                if key in results.keys():
-                    results[key].append(value)
-                else:
-                    results[key] = [value]
-        yield from results.items()
-        # return results
-
-
-class ThreadPoolHandler(ConcurrencyHandler):
+class ThreadPooler(Parallelizer):
     def __init__(
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
@@ -90,6 +65,7 @@ class ThreadPoolHandler(ConcurrencyHandler):
         self.executor = executor
 
 
+    # @TODO: Make recursive
     def fork(
         self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ThreadPoolExecutor] = None,
@@ -114,10 +90,7 @@ class ThreadPoolHandler(ConcurrencyHandler):
                     yield future.result()
 
 
-class ProcessPoolHandler(ConcurrencyHandler):
-    parallel: bool = True
-
-
+class ProcessPooler(Parallelizer):
     def __init__(
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None
@@ -132,6 +105,7 @@ class ProcessPoolHandler(ConcurrencyHandler):
         self.executor = executor
 
 
+    # @TODO: Make recursive
     def fork(
         self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None,
@@ -140,8 +114,6 @@ class ProcessPoolHandler(ConcurrencyHandler):
             executor = self.executor
         if max_workers is None:
             max_workers = self.max_workers
-
-        kwargs[&#39;make_pickleable&#39;] = True
 
         if executor is not None:
             futures = [
@@ -155,7 +127,42 @@ class ProcessPoolHandler(ConcurrencyHandler):
                     executor.submit(f, item, *args, **kwargs) for item in iterable
                 ]
                 for future in concurrent.futures.as_completed(futures):
-                    yield future.result()</code></pre>
+                    yield future.result()
+
+
+class AsyncGatherer(Parallelizer):
+    @classmethod
+    async def _fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -&gt; Generator:
+        tasks = list()
+        for item in iterable:
+            if recurse and (isinstance(item, data.Data) or isinstance(item, Iterator)):
+                tasks.append(cls._fork(f, item, *args, recurse=recurse, **kwargs))
+            else:
+                tasks.append(f(item, *args, **kwargs))
+        results = await asyncio.gather(
+            *tasks
+        )
+        return results
+
+
+    @classmethod
+    def make_async_decorator(cls, f: Callable):
+        @functools.wraps(f)
+        async def async_wrapper(*args, **kwargs):
+            return await f(*args, **kwargs)
+        return async_wrapper
+
+
+    @classmethod
+    def fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -&gt; Generator:
+        f = cls.make_async_decorator(f)
+        yield from asyncio.run(cls._fork(f, iterable, *args, recurse=recurse, **kwargs))</code></pre>
 </details>
 </section>
 <section>
@@ -167,8 +174,8 @@ class ProcessPoolHandler(ConcurrencyHandler):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler"><code class="flex name class">
-<span>class <span class="ident">ConcurrencyHandler</span></span>
+<dt id="light_pipe.parallelizer.AsyncGatherer"><code class="flex name class">
+<span>class <span class="ident">AsyncGatherer</span></span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -176,54 +183,120 @@ class ProcessPoolHandler(ConcurrencyHandler):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ConcurrencyHandler:
-    parallel: bool = False
-
-
+<pre><code class="python">class AsyncGatherer(Parallelizer):
     @classmethod
-    def fork(cls, f: Callable, iterable: Iterable, *args, **kwargs) -&gt; Generator:
-        results = [
-            f(item, *args, **kwargs) for item in iterable
-        ]
-        yield from results
-        # return results
-
-
-    @classmethod
-    def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
-        results = dict()
+    async def _fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -&gt; Generator:
+        tasks = list()
         for item in iterable:
-            if isinstance(item, Generator) or isinstance(item, list):
-                for key, values in cls.join(item):
-                    if key in results.keys():
-                        results[key] += values
-                    else:
-                        results[key] = values
+            if recurse and (isinstance(item, data.Data) or isinstance(item, Iterator)):
+                tasks.append(cls._fork(f, item, *args, recurse=recurse, **kwargs))
             else:
-                key, value = item
-                if key in results.keys():
-                    results[key].append(value)
-                else:
-                    results[key] = [value]
-        yield from results.items()
-        # return results</code></pre>
+                tasks.append(f(item, *args, **kwargs))
+        results = await asyncio.gather(
+            *tasks
+        )
+        return results
+
+
+    @classmethod
+    def make_async_decorator(cls, f: Callable):
+        @functools.wraps(f)
+        async def async_wrapper(*args, **kwargs):
+            return await f(*args, **kwargs)
+        return async_wrapper
+
+
+    @classmethod
+    def fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -&gt; Generator:
+        f = cls.make_async_decorator(f)
+        yield from asyncio.run(cls._fork(f, iterable, *args, recurse=recurse, **kwargs))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="light_pipe.parallelizer.Parallelizer" href="#light_pipe.parallelizer.Parallelizer">Parallelizer</a></li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="light_pipe.parallelizer.AsyncGatherer.fork"><code class="name flex">
+<span>def <span class="ident">fork</span></span>(<span>f: Callable, iterable: Iterable, *args, recurse: Optional[bool] = True, **kwargs) ‑> Generator</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def fork(
+    cls, f: Callable, iterable: Iterable, *args, 
+    recurse: Optional[bool] = True, **kwargs
+) -&gt; Generator:
+    f = cls.make_async_decorator(f)
+    yield from asyncio.run(cls._fork(f, iterable, *args, recurse=recurse, **kwargs))</code></pre>
+</details>
+</dd>
+<dt id="light_pipe.parallelizer.AsyncGatherer.make_async_decorator"><code class="name flex">
+<span>def <span class="ident">make_async_decorator</span></span>(<span>f: Callable)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def make_async_decorator(cls, f: Callable):
+    @functools.wraps(f)
+    async def async_wrapper(*args, **kwargs):
+        return await f(*args, **kwargs)
+    return async_wrapper</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="light_pipe.parallelizer.Parallelizer"><code class="flex name class">
+<span>class <span class="ident">Parallelizer</span></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Parallelizer:
+    @classmethod
+    def fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -&gt; Generator:
+        if recurse:
+            results = [
+                cls.fork(f, item, *args, recurse=recurse, **kwargs) if \
+                    (isinstance(item, data.Data) or isinstance(item, Iterator)) else \
+                    f(item, *args, **kwargs) for item in iterable
+            ]
+        else:
+            results = [
+                f(item, *args, **kwargs) for item in iterable
+            ]
+        yield from results</code></pre>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler" href="#light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler">ProcessPoolHandler</a></li>
-<li><a title="light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler" href="#light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler">ThreadPoolHandler</a></li>
+<li><a title="light_pipe.parallelizer.AsyncGatherer" href="#light_pipe.parallelizer.AsyncGatherer">AsyncGatherer</a></li>
+<li><a title="light_pipe.parallelizer.ProcessPooler" href="#light_pipe.parallelizer.ProcessPooler">ProcessPooler</a></li>
+<li><a title="light_pipe.parallelizer.ThreadPooler" href="#light_pipe.parallelizer.ThreadPooler">ThreadPooler</a></li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.parallel"><code class="name">var <span class="ident">parallel</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 <h3>Static methods</h3>
 <dl>
-<dt id="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.fork"><code class="name flex">
-<span>def <span class="ident">fork</span></span>(<span>f: Callable, iterable: Iterable, *args, **kwargs) ‑> Generator</span>
+<dt id="light_pipe.parallelizer.Parallelizer.fork"><code class="name flex">
+<span>def <span class="ident">fork</span></span>(<span>f: Callable, iterable: Iterable, *args, recurse: Optional[bool] = True, **kwargs) ‑> Generator</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -232,47 +305,27 @@ class ProcessPoolHandler(ConcurrencyHandler):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@classmethod
-def fork(cls, f: Callable, iterable: Iterable, *args, **kwargs) -&gt; Generator:
-    results = [
-        f(item, *args, **kwargs) for item in iterable
-    ]
-    yield from results
-    # return results</code></pre>
-</details>
-</dd>
-<dt id="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.join"><code class="name flex">
-<span>def <span class="ident">join</span></span>(<span>iterable: Iterable[Tuple]) ‑> Generator</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@classmethod
-def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
-    results = dict()
-    for item in iterable:
-        if isinstance(item, Generator) or isinstance(item, list):
-            for key, values in cls.join(item):
-                if key in results.keys():
-                    results[key] += values
-                else:
-                    results[key] = values
-        else:
-            key, value = item
-            if key in results.keys():
-                results[key].append(value)
-            else:
-                results[key] = [value]
-    yield from results.items()
-    # return results</code></pre>
+def fork(
+    cls, f: Callable, iterable: Iterable, *args, 
+    recurse: Optional[bool] = True, **kwargs
+) -&gt; Generator:
+    if recurse:
+        results = [
+            cls.fork(f, item, *args, recurse=recurse, **kwargs) if \
+                (isinstance(item, data.Data) or isinstance(item, Iterator)) else \
+                f(item, *args, **kwargs) for item in iterable
+        ]
+    else:
+        results = [
+            f(item, *args, **kwargs) for item in iterable
+        ]
+    yield from results</code></pre>
 </details>
 </dd>
 </dl>
 </dd>
-<dt id="light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler"><code class="flex name class">
-<span>class <span class="ident">ProcessPoolHandler</span></span>
+<dt id="light_pipe.parallelizer.ProcessPooler"><code class="flex name class">
+<span>class <span class="ident">ProcessPooler</span></span>
 <span>(</span><span>max_workers: Optional[int] = None, executor: Optional[concurrent.futures.process.ProcessPoolExecutor] = None)</span>
 </code></dt>
 <dd>
@@ -281,10 +334,7 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ProcessPoolHandler(ConcurrencyHandler):
-    parallel: bool = True
-
-
+<pre><code class="python">class ProcessPooler(Parallelizer):
     def __init__(
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None
@@ -299,6 +349,7 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
         self.executor = executor
 
 
+    # @TODO: Make recursive
     def fork(
         self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None,
@@ -307,8 +358,6 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
             executor = self.executor
         if max_workers is None:
             max_workers = self.max_workers
-
-        kwargs[&#39;make_pickleable&#39;] = True
 
         if executor is not None:
             futures = [
@@ -326,18 +375,11 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a></li>
+<li><a title="light_pipe.parallelizer.Parallelizer" href="#light_pipe.parallelizer.Parallelizer">Parallelizer</a></li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler.parallel"><code class="name">var <span class="ident">parallel</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 <h3>Methods</h3>
 <dl>
-<dt id="light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler.fork"><code class="name flex">
+<dt id="light_pipe.parallelizer.ProcessPooler.fork"><code class="name flex">
 <span>def <span class="ident">fork</span></span>(<span>self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None, executor: Optional[concurrent.futures.process.ProcessPoolExecutor] = None, *args, **kwargs) ‑> Generator</span>
 </code></dt>
 <dd>
@@ -354,8 +396,6 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
         executor = self.executor
     if max_workers is None:
         max_workers = self.max_workers
-
-    kwargs[&#39;make_pickleable&#39;] = True
 
     if executor is not None:
         futures = [
@@ -374,8 +414,8 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
 </dd>
 </dl>
 </dd>
-<dt id="light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler"><code class="flex name class">
-<span>class <span class="ident">ThreadPoolHandler</span></span>
+<dt id="light_pipe.parallelizer.ThreadPooler"><code class="flex name class">
+<span>class <span class="ident">ThreadPooler</span></span>
 <span>(</span><span>max_workers: Optional[int] = None, executor: Optional[concurrent.futures.thread.ThreadPoolExecutor] = None)</span>
 </code></dt>
 <dd>
@@ -384,7 +424,7 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ThreadPoolHandler(ConcurrencyHandler):
+<pre><code class="python">class ThreadPooler(Parallelizer):
     def __init__(
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
@@ -396,6 +436,7 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
         self.executor = executor
 
 
+    # @TODO: Make recursive
     def fork(
         self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ThreadPoolExecutor] = None,
@@ -421,11 +462,11 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a></li>
+<li><a title="light_pipe.parallelizer.Parallelizer" href="#light_pipe.parallelizer.Parallelizer">Parallelizer</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler.fork"><code class="name flex">
+<dt id="light_pipe.parallelizer.ThreadPooler.fork"><code class="name flex">
 <span>def <span class="ident">fork</span></span>(<span>self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None, executor: Optional[concurrent.futures.thread.ThreadPoolExecutor] = None, *args, **kwargs) ‑> Generator</span>
 </code></dt>
 <dd>
@@ -471,30 +512,34 @@ def join(cls, iterable: Iterable[Tuple]) -&gt; Generator:
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="light_pipe.concurrency" href="index.html">light_pipe.concurrency</a></code></li>
+<li><code><a title="light_pipe" href="index.html">light_pipe</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler">ConcurrencyHandler</a></code></h4>
+<h4><code><a title="light_pipe.parallelizer.AsyncGatherer" href="#light_pipe.parallelizer.AsyncGatherer">AsyncGatherer</a></code></h4>
 <ul class="">
-<li><code><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.fork" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.fork">fork</a></code></li>
-<li><code><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.join" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.join">join</a></code></li>
-<li><code><a title="light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.parallel" href="#light_pipe.concurrency.concurrency_handlers.ConcurrencyHandler.parallel">parallel</a></code></li>
+<li><code><a title="light_pipe.parallelizer.AsyncGatherer.fork" href="#light_pipe.parallelizer.AsyncGatherer.fork">fork</a></code></li>
+<li><code><a title="light_pipe.parallelizer.AsyncGatherer.make_async_decorator" href="#light_pipe.parallelizer.AsyncGatherer.make_async_decorator">make_async_decorator</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler" href="#light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler">ProcessPoolHandler</a></code></h4>
+<h4><code><a title="light_pipe.parallelizer.Parallelizer" href="#light_pipe.parallelizer.Parallelizer">Parallelizer</a></code></h4>
 <ul class="">
-<li><code><a title="light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler.fork" href="#light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler.fork">fork</a></code></li>
-<li><code><a title="light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler.parallel" href="#light_pipe.concurrency.concurrency_handlers.ProcessPoolHandler.parallel">parallel</a></code></li>
+<li><code><a title="light_pipe.parallelizer.Parallelizer.fork" href="#light_pipe.parallelizer.Parallelizer.fork">fork</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler" href="#light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler">ThreadPoolHandler</a></code></h4>
+<h4><code><a title="light_pipe.parallelizer.ProcessPooler" href="#light_pipe.parallelizer.ProcessPooler">ProcessPooler</a></code></h4>
 <ul class="">
-<li><code><a title="light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler.fork" href="#light_pipe.concurrency.concurrency_handlers.ThreadPoolHandler.fork">fork</a></code></li>
+<li><code><a title="light_pipe.parallelizer.ProcessPooler.fork" href="#light_pipe.parallelizer.ProcessPooler.fork">fork</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="light_pipe.parallelizer.ThreadPooler" href="#light_pipe.parallelizer.ThreadPooler">ThreadPooler</a></code></h4>
+<ul class="">
+<li><code><a title="light_pipe.parallelizer.ThreadPooler.fork" href="#light_pipe.parallelizer.ThreadPooler.fork">fork</a></code></li>
 </ul>
 </li>
 </ul>

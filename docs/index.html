@@ -24,6 +24,8 @@
 <section id="section-intro">
 <h1 id="light-pipe"><a href="https://github.com/rcorrero/light-pipe">Light-Pipe</a></h1>
 <hr>
+<h2 id="update-20221018">Update (2022/10/18)</h2>
+<p>Light-Pipe is under heavy construction. The core abstractions are now found in Light-Pipe (<code><a title="light_pipe" href="#light_pipe">light_pipe</a></code>): the geospatial-specific functionalities have been refactored into another package, called Light-Pipe-Geo (<code>light_pipe_geo</code>). The core package now has <strong>zero</strong> dependencies: just pure Python. The core library contains abstractions that facilitate parallelization and scalability. The plan is to create multiple packages, like Light-Pipe-Geo, that use Light-Pipe to solve domain-specific problems in an elegant, scalable manner. Orthogonalizing across use-cases like this allows you to import only the package(s) you need for your specific problem domain.</p>
 <h2 id="overview">Overview</h2>
 <p><a href="https://www.light-pipe.io/">Light-Pipe</a> is an open-source Python package that efficiently and losslessly creates analysis-ready samples from georeferenced data to facilitate the deployment of computer vision models at scale. It also provides tools to post-process model outputs and prepare them for interpretation. Light-Pipe is designed to scale effortlessly, being built from the ground-up to support concurrency in all its forms. It's also light-weight, with only one dependency, designed to do its job and get out of the way, and to force as few assumptions as possible on the user. Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause License</a>. It is currently under heavy development, and every update is liable to break backwards-compatibility.</p>
 <p>Light-Pipe's one non-standard Python dependency, the <a href="https://gdal.org/"><code>osgeo</code></a> library, is released under an MIT style open source license by <a href="https://www.osgeo.org/">The Open Source Geospatial Foundation</a>.</p>
@@ -113,15 +115,21 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">__author__ = &#34;Richard Correro(rcorrero@stanford.edu)&#34;
+<pre><code class="python">__author__ = &#34;Richard Correro (rcorrero@stanford.edu)&#34;
 
-__version__ = &#39;0.1&#39;
+
+from .data import *
+from .parallelizer import *
+from .transformer import *
 
 __doc__ = &#34;&#34;&#34;
-
 # [Light-Pipe](https://github.com/rcorrero/light-pipe)
 
 ---
+
+## Update (2022/10/18)
+
+Light-Pipe is under heavy construction. The core abstractions are now found in Light-Pipe (`light_pipe`): the geospatial-specific functionalities have been refactored into another package, called Light-Pipe-Geo (`light_pipe_geo`). The core package now has __zero__ dependencies: just pure Python. The core library contains abstractions that facilitate parallelization and scalability. The plan is to create multiple packages, like Light-Pipe-Geo, that use Light-Pipe to solve domain-specific problems in an elegant, scalable manner. Orthogonalizing across use-cases like this allows you to import only the package(s) you need for your specific problem domain.
 
 ## Overview
 
@@ -214,52 +222,17 @@ Copyright 2020-2022 [Richard Correro](https://www.richardcorrero.com/).
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
-<dt><code class="name"><a title="light_pipe.concurrency" href="concurrency/index.html">light_pipe.concurrency</a></code></dt>
+<dt><code class="name"><a title="light_pipe.data" href="data.html">light_pipe.data</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt><code class="name"><a title="light_pipe.gdal_data_handlers" href="gdal_data_handlers.html">light_pipe.gdal_data_handlers</a></code></dt>
-<dd>
-<div class="desc"><p>The module defines decorators which may be used to handle dataset opening and
-closing.</p></div>
-</dd>
-<dt><code class="name"><a title="light_pipe.gridding" href="gridding.html">light_pipe.gridding</a></code></dt>
-<dd>
-<div class="desc"><p>This module contains code used to generate standardized grid cell datasets from
-arbitrarily-aligned imagery. These datasets are particularly useful in …</p></div>
-</dd>
-<dt><code class="name"><a title="light_pipe.mercantile" href="mercantile.html">light_pipe.mercantile</a></code></dt>
-<dd>
-<div class="desc"><p>From: <a href="https://github.com/mapbox/mercantile/blob/fe3762d14001ca400caf7462f59433b906fc25bd/mercantile/__init__.py">https://github.com/mapbox/mercantile/blob/fe3762d14001ca400caf7462f59433b906fc25bd/mercantile/__init__.py</a>
-Credit: Mapbox
-Original License: …</p></div>
-</dd>
-<dt><code class="name"><a title="light_pipe.pipeline" href="pipeline.html">light_pipe.pipeline</a></code></dt>
-<dd>
-<div class="desc"><p>This module contains the definition of <code>LightPipeline</code>, a key component of the
-API of this package and the primary method through which the user …</p></div>
-</dd>
-<dt><code class="name"><a title="light_pipe.processing" href="processing/index.html">light_pipe.processing</a></code></dt>
+<dt><code class="name"><a title="light_pipe.parallelizer" href="parallelizer.html">light_pipe.parallelizer</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt><code class="name"><a title="light_pipe.raster_io" href="raster_io.html">light_pipe.raster_io</a></code></dt>
-<dd>
-<div class="desc"><p>This module contains utility functions which facilitate file I/O.</p></div>
-</dd>
-<dt><code class="name"><a title="light_pipe.raster_trans" href="raster_trans.html">light_pipe.raster_trans</a></code></dt>
-<dd>
-<div class="desc"><p>This module contains functions which operate on <code>gdal.Dataset</code> instances,
-<code>ogr.DataSource</code> instances, or create instances of these types.</p></div>
-</dd>
-<dt><code class="name"><a title="light_pipe.test" href="test/index.html">light_pipe.test</a></code></dt>
+<dt><code class="name"><a title="light_pipe.transformer" href="transformer.html">light_pipe.transformer</a></code></dt>
 <dd>
 <div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="light_pipe.tiling" href="tiling.html">light_pipe.tiling</a></code></dt>
-<dd>
-<div class="desc"><p>This module contains functions necessary to efficiently generate subsample
-arrays from groups of raster datasets. Note: in Light-Pipe, <em>tile</em> refers …</p></div>
 </dd>
 </dl>
 </section>
@@ -275,6 +248,7 @@ arrays from groups of raster datasets. Note: in Light-Pipe, <em>tile</em> refers
 <div class="toc">
 <ul>
 <li><a href="#light-pipe">Light-Pipe</a><ul>
+<li><a href="#update-20221018">Update (2022/10/18)</a></li>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#comparing-light-pipe-with-existing-packages">Comparing Light-Pipe With Existing Packages</a><ul>
 <li><a href="#raster-tiling">Raster Tiling</a><ul>
@@ -292,16 +266,9 @@ arrays from groups of raster datasets. Note: in Light-Pipe, <em>tile</em> refers
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
-<li><code><a title="light_pipe.concurrency" href="concurrency/index.html">light_pipe.concurrency</a></code></li>
-<li><code><a title="light_pipe.gdal_data_handlers" href="gdal_data_handlers.html">light_pipe.gdal_data_handlers</a></code></li>
-<li><code><a title="light_pipe.gridding" href="gridding.html">light_pipe.gridding</a></code></li>
-<li><code><a title="light_pipe.mercantile" href="mercantile.html">light_pipe.mercantile</a></code></li>
-<li><code><a title="light_pipe.pipeline" href="pipeline.html">light_pipe.pipeline</a></code></li>
-<li><code><a title="light_pipe.processing" href="processing/index.html">light_pipe.processing</a></code></li>
-<li><code><a title="light_pipe.raster_io" href="raster_io.html">light_pipe.raster_io</a></code></li>
-<li><code><a title="light_pipe.raster_trans" href="raster_trans.html">light_pipe.raster_trans</a></code></li>
-<li><code><a title="light_pipe.test" href="test/index.html">light_pipe.test</a></code></li>
-<li><code><a title="light_pipe.tiling" href="tiling.html">light_pipe.tiling</a></code></li>
+<li><code><a title="light_pipe.data" href="data.html">light_pipe.data</a></code></li>
+<li><code><a title="light_pipe.parallelizer" href="parallelizer.html">light_pipe.parallelizer</a></code></li>
+<li><code><a title="light_pipe.transformer" href="transformer.html">light_pipe.transformer</a></code></li>
 </ul>
 </li>
 </ul>
