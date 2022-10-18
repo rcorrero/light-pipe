@@ -69,7 +69,7 @@ class Transformer:
 
 
     def __ror__(self, data: data.Data):
-        return self(data)
+        return self(data) 
 
 
 class Pipeline(Transformer):

@@ -67,4 +67,4 @@ class Data:
         return self._copy(
            *args, generator=generator, store_results=store_results, 
            results=results, **kwargs
-        )
+        )        

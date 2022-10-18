@@ -1,5 +1,8 @@
+import asyncio
 import concurrent.futures
-from typing import Callable, Generator, Iterable, Iterator, Optional
+import functools
+from typing import (AsyncGenerator, Callable, Generator, Iterable, Iterator,
+                    Optional)
 
 from light_pipe import data
 
@@ -14,16 +17,16 @@ class Parallelizer:
             results = [
                 cls.fork(f, item, *args, recurse=recurse, **kwargs) if \
                     (isinstance(item, data.Data) or isinstance(item, Iterator)) else \
-                    f(item, *args, recurse=recurse, **kwargs) for item in iterable
+                    f(item, *args, **kwargs) for item in iterable
             ]
         else:
             results = [
-                f(item, *args, recurse=recurse, **kwargs) for item in iterable
+                f(item, *args, **kwargs) for item in iterable
             ]
         yield from results
 
 
-class ThreadPool(Parallelizer):
+class ThreadPooler(Parallelizer):
     def __init__(
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
@@ -60,7 +63,7 @@ class ThreadPool(Parallelizer):
                     yield future.result()
 
 
-class ProcessPool(Parallelizer):
+class ProcessPooler(Parallelizer):
     def __init__(
         self, max_workers: Optional[int] = None,
         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None
@@ -85,8 +88,6 @@ class ProcessPool(Parallelizer):
         if max_workers is None:
             max_workers = self.max_workers
 
-        kwargs['make_pickleable'] = True
-
         if executor is not None:
             futures = [
                 executor.submit(f, item, *args, **kwargs) for item in iterable
@@ -100,3 +101,38 @@ class ProcessPool(Parallelizer):
                 ]
                 for future in concurrent.futures.as_completed(futures):
                     yield future.result()
+
+
+class AsyncGatherer(Parallelizer):
+    @classmethod
+    async def _fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -> Generator:
+        tasks = list()
+        for item in iterable:
+            if recurse and (isinstance(item, data.Data) or isinstance(item, Iterator)):
+                tasks.append(cls._fork(f, item, *args, recurse=recurse, **kwargs))
+            else:
+                tasks.append(f(item, *args, **kwargs))
+        results = await asyncio.gather(
+            *tasks
+        )
+        return results
+
+
+    @classmethod
+    def make_async_decorator(cls, f: Callable):
+        @functools.wraps(f)
+        async def async_wrapper(*args, **kwargs):
+            return await f(*args, **kwargs)
+        return async_wrapper
+
+
+    @classmethod
+    def fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -> Generator:
+        f = cls.make_async_decorator(f)
+        yield from asyncio.run(cls._fork(f, iterable, *args, recurse=recurse, **kwargs))
