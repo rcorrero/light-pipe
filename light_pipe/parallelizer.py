@@ -1,7 +1,8 @@
 import asyncio
 import concurrent.futures
 import functools
-from typing import Callable, Generator, Iterable, Iterator, Optional
+from typing import (Any, AsyncGenerator, Callable, Generator, Iterable,
+                    Iterator, Optional, Tuple)
 
 from light_pipe import data
 
@@ -107,21 +108,40 @@ class AsyncGatherer(Parallelizer):
     async def _fork(
         cls, f: Callable, iterable: Iterable, *args, 
         recurse: Optional[bool] = True, **kwargs
-    ) -> Generator:
+    ) -> AsyncGenerator:
         tasks = list()
         for item in iterable:
             if recurse and (isinstance(item, data.Data) or isinstance(item, Iterator)):
                 tasks.append(cls._fork(f, item, *args, recurse=recurse, **kwargs))
             else:
                 tasks.append(f(item, *args, **kwargs))
-        results = await asyncio.gather(
-            *tasks
-        )
-        return results
+        for result in asyncio.as_completed(tasks):
+            result = await result
+            yield result
 
 
     @classmethod
-    def make_async_decorator(cls, f: Callable):
+    def _iter(cls, loop: asyncio.AbstractEventLoop, async_generator: AsyncGenerator):
+        ait = async_generator.__aiter__()
+        async def get_next() -> Tuple[bool, Any]:
+            try:
+                obj = await ait.__anext__()
+                done = False
+            except StopAsyncIteration:
+                obj = None
+                done = True
+            return done, obj
+
+
+        while True:
+            done, obj = loop.run_until_complete(get_next())
+            if done:
+                break
+            yield obj
+
+
+    @classmethod
+    def _make_async_decorator(cls, f: Callable):
         @functools.wraps(f)
         async def async_wrapper(*args, **kwargs):
             return await f(*args, **kwargs)
@@ -131,7 +151,12 @@ class AsyncGatherer(Parallelizer):
     @classmethod
     def fork(
         cls, f: Callable, iterable: Iterable, *args, 
-        recurse: Optional[bool] = True, **kwargs
+        recurse: Optional[bool] = True, 
+        loop: Optional[asyncio.AbstractEventLoop] = None, 
+        **kwargs
     ) -> Generator:
-        f = cls.make_async_decorator(f)
-        yield from asyncio.run(cls._fork(f, iterable, *args, recurse=recurse, **kwargs))
+        f = cls._make_async_decorator(f)
+        if loop is None:
+            loop = asyncio.get_event_loop()
+        async_generator = cls._fork(f, iterable, *args, recurse=recurse, **kwargs)
+        yield from cls._iter(loop, async_generator)

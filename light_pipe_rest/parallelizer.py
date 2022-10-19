@@ -1,13 +1,14 @@
-import asyncio
-from typing import Callable, Generator, Iterable, Iterator, Optional
+from typing import AsyncGenerator, Callable, Iterable, Optional
 
 import aiohttp
-from light_pipe import AsyncGatherer, Data
+from light_pipe import AsyncGatherer
 
 
 class AiohttpGatherer(AsyncGatherer):
     @classmethod
-    def make_session_with_auth(cls, login: str, password: str = "", *args, **kwargs):
+    def _make_session_with_auth(
+        cls, login: str, password: str = "", *args, **kwargs
+    ):
         auth = aiohttp.BasicAuth(login, password)
         session = aiohttp.ClientSession(auth=auth)
         return session
@@ -19,24 +20,17 @@ class AiohttpGatherer(AsyncGatherer):
         recurse: Optional[bool] = True, 
         session: Optional[aiohttp.ClientSession] = None, 
         use_auth: Optional[bool] = True, **kwargs
-    ) -> Generator:
+    ) -> AsyncGenerator:
         if session is None:
             if use_auth:
-                session = cls.make_session_with_auth(*args, **kwargs)
+                session = cls._make_session_with_auth(*args, **kwargs)
             else:
                 session = aiohttp.ClientSession()
         async with session as session:
-            tasks = list()
-            for item in iterable:
-                if recurse and (isinstance(item, Data) or isinstance(item, Iterator)):
-                    tasks.append(cls._fork(
-                        f, item, *args, recurse=recurse, session=session, **kwargs
-                        )
-                    )
-                else:
-                    tasks.append(f(item, *args, session=session, **kwargs))
-            results = await asyncio.gather(
-                *tasks
+            results = super()._fork(
+                f, iterable, *args, recurse=recurse, session=session, 
+                use_auth=use_auth, **kwargs
             )
+            async for result in results:
+                yield result
         await session.close()
-        return results   
