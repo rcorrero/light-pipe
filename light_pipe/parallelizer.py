@@ -2,7 +2,7 @@ import asyncio
 import concurrent.futures
 import functools
 from typing import (Any, AsyncGenerator, Callable, Coroutine, Generator,
-                    Iterable, Iterator, Optional, Tuple)
+                    Iterable, Iterator, List, Optional, Tuple)
 
 from light_pipe import data
 
@@ -108,7 +108,7 @@ class AsyncGatherer(Parallelizer):
     def _get_tasks(
         cls, f: Callable, iterable: Iterable, *args, 
         recurse: Optional[bool] = True, **kwargs
-    ) -> AsyncGenerator:
+    ) -> List[asyncio.Task]:
         tasks = list()
         for item in iterable:
             if recurse and (isinstance(item, data.Data) or isinstance(item, Iterator)):
