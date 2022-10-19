@@ -1,8 +1,8 @@
 import asyncio
 import concurrent.futures
 import functools
-from typing import (Any, AsyncGenerator, Callable, Generator, Iterable,
-                    Iterator, Optional, Tuple)
+from typing import (Any, AsyncGenerator, Callable, Coroutine, Generator,
+                    Iterable, Iterator, Optional, Tuple)
 
 from light_pipe import data
 
@@ -144,7 +144,10 @@ class AsyncGatherer(Parallelizer):
     def _make_async_decorator(cls, f: Callable):
         @functools.wraps(f)
         async def async_wrapper(*args, **kwargs):
-            return await f(*args, **kwargs)
+            result = f(*args, **kwargs)
+            if isinstance(result, Coroutine):
+                return await result
+            return result
         return async_wrapper
 
 
