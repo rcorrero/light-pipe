@@ -105,19 +105,39 @@ class ProcessPooler(Parallelizer):
 
 class AsyncGatherer(Parallelizer):
     @classmethod
-    async def _fork(
+    def _get_tasks(
         cls, f: Callable, iterable: Iterable, *args, 
         recurse: Optional[bool] = True, **kwargs
     ) -> AsyncGenerator:
         tasks = list()
         for item in iterable:
             if recurse and (isinstance(item, data.Data) or isinstance(item, Iterator)):
-                tasks.append(cls._fork(f, item, *args, recurse=recurse, **kwargs))
+                tasks += cls._get_tasks(f, item, *args, recurse=recurse, **kwargs)
             else:
                 tasks.append(f(item, *args, **kwargs))
+        return tasks
+            
+
+    @classmethod
+    async def _fork(
+        cls, f: Callable, iterable: Iterable, *args, 
+        recurse: Optional[bool] = True, **kwargs
+    ) -> AsyncGenerator:
+        tasks = cls._get_tasks(f, iterable, *args, recurse=recurse, **kwargs)
         for result in asyncio.as_completed(tasks):
             result = await result
             yield result
+
+
+    @classmethod
+    def _make_async_decorator(cls, f: Callable):
+        @functools.wraps(f)
+        async def async_wrapper(*args, **kwargs):
+            result = f(*args, **kwargs)
+            if isinstance(result, Coroutine):
+                return await result
+            return result
+        return async_wrapper
 
 
     @classmethod
@@ -137,18 +157,7 @@ class AsyncGatherer(Parallelizer):
             done, obj = loop.run_until_complete(get_next())
             if done:
                 break
-            yield obj
-
-
-    @classmethod
-    def _make_async_decorator(cls, f: Callable):
-        @functools.wraps(f)
-        async def async_wrapper(*args, **kwargs):
-            result = f(*args, **kwargs)
-            if isinstance(result, Coroutine):
-                return await result
-            return result
-        return async_wrapper
+            yield obj        
 
 
     @classmethod
