@@ -69,7 +69,11 @@ class Transformer:
 
 
     def __ror__(self, data: data.Data):
-        return self(data) 
+        return self(data, return_copy=True)
+
+
+    def __rrshift__(self, data: data.Data):
+        return self(data, return_copy=False) 
 
 
 class Pipeline(Transformer):
