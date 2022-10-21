@@ -4,11 +4,14 @@ from typing import Any, Callable, Optional
 class Data:
     def __init__(
         self, generator: Optional[Callable] = None, 
-        store_results: Optional[bool] = False, results: Optional[Any] = None
+        store_results: Optional[bool] = False, results: Optional[Any] = None,
+        *args, **kwargs
     ):
         self.generator = generator
         self.store_results = store_results
         self.results = results
+        self.args = args
+        self.kwargs = kwargs
 
 
     def wrap_generator(self, wrapper_fn: Callable, *args, **kwargs):
@@ -16,6 +19,8 @@ class Data:
 
 
     def generate(self, *args, **kwargs):
+        args = (*args, *self.args)
+        kwargs = {**kwargs, **self.kwargs}
         if self.store_results:
             if self.results is not None:
                 yield from self.results
@@ -29,8 +34,12 @@ class Data:
             yield from self.generator(*args, **kwargs)
 
 
-    def block(self, *args, **kwargs):
-        results = list(self.generate(*args, **kwargs))
+    def block(self, *args, no_return: Optional[bool] = False, **kwargs):
+        if no_return:
+            for _ in self.generate(*args, **kwargs):
+                pass
+            return
+        results = list(self.generate(*args, **kwargs))            
         return results
 
 
@@ -45,6 +54,28 @@ class Data:
             return self.results
         else:
             return self()        
+
+
+    def __enter__(
+        self, generator: Optional[Callable] = None, 
+        store_results: Optional[bool] = None, results: Optional[Any] = None,
+        *args, **kwargs
+    ):
+        if generator is not None:
+            self.generator = generator
+        if store_results is not None:
+            self.store_results = store_results
+        if results is not None:
+            self.results = results
+        self.args = (*args, *self.args)
+        self.kwargs = {**kwargs, **self.kwargs}
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        block = True
+        no_return = True
+        self(block=block, no_return=no_return)
 
 
     @classmethod
@@ -64,6 +95,8 @@ class Data:
             store_results = self.store_results
         if copy_results and results is None:
             results = self.results
+        args = (*args, *self.args)
+        kwargs = {**kwargs, **self.kwargs}
         return self._copy(
            *args, generator=generator, store_results=store_results, 
            results=results, **kwargs

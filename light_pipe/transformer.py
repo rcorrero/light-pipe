@@ -72,6 +72,22 @@ class Transformer:
         return self(data, return_copy=True)
 
 
+    def __rlshift__(self, data: data.Data):
+        """
+        The left-shift operator is overloaded for symmetry with the right-shift
+        operator overloading. Currently 
+        ```
+            Data(...) | Transformer(...)
+        ```
+        and 
+        ```
+            Data(...) << Transformer(...)
+        ```
+        do the same thing.
+        """
+        return self(data, return_copy=True)        
+
+
     def __rrshift__(self, data: data.Data):
         return self(data, return_copy=False) 
 
