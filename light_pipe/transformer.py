@@ -55,17 +55,21 @@ class Transformer:
 
 
     def transform(
-        self, data: data.Data, *args, return_copy: Optional[bool] = True, **kwargs
+        self, data: data.Data, *args, return_copy: Optional[bool] = True,
+        block: Optional[bool] = False, **kwargs
     ) -> data.Data:
         decorator = self._make_decorator(*args, *self.args, **kwargs, **self.kwargs)
         if return_copy:
             data = data.copy(*args, **kwargs)
         data.wrap_generator(decorator, *args, **kwargs)
+        if block:
+            data.store_results = True # Overwrite setting when blocking on transformer
+            data(block=block, no_return=True)
         return data
 
 
     def __call__(self, data: data.Data, *args, **kwargs):
-        return self.transform(data, *args, **kwargs)
+        return self.transform(data, *args, *self.args, **kwargs, **self.kwargs)
 
 
     def __ror__(self, data: data.Data):

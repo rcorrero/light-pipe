@@ -86,7 +86,7 @@ class Data:
     def copy(
         self, generator: Optional[Callable] = None, 
         store_results: Optional[bool] = None,
-        copy_results: Optional[bool] = False, results: Optional[Any] = None,
+        copy_results: Optional[bool] = True, results: Optional[Any] = None,
         *args, **kwargs
     ):
         if generator is None:

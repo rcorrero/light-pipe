@@ -110,19 +110,24 @@ class BlockingThreadPooler(Parallelizer):
 
         if executor is not None:
             futures = dict()
+            exhausted = False
             while True:
-                while not executor._work_queue.full():
+                while not exhausted and not executor._work_queue.full():
                     try:
                         item = next(iterable)
                     except StopIteration:
+                        exhausted = True
                         break
                     futures[executor.submit(f, item, *args, **kwargs)] = "Done"
-                done, not_done = concurrent.futures.wait(
-                    futures, return_when=concurrent.futures.FIRST_COMPLETED
-                )
-                for future in done:
+                if futures: # There's at least one task left to await
+                    done, _ = concurrent.futures.wait(
+                        futures, return_when=concurrent.futures.FIRST_COMPLETED
+                    ) # Will block until at least one future finishes or cancels
+                    future = done[0]
                     yield future.result()
                     del(futures[future])
+                else:
+                    break
 
 
             for future in concurrent.futures.as_completed(futures):
