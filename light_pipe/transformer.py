@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Callable, Generator, Iterable, Iterator, Optional
+from typing import Callable, Generator, Iterable, Iterator, Optional
 
 from light_pipe import data, parallelizer
 
@@ -10,14 +10,32 @@ class Transformer:
 
     def __init__(
         self, transform_item: Optional[Callable] = None,
-        parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer,
+        join_fn: Optional[Callable] = None,
+        parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer(),
         *args, **kwargs
     ):
         if transform_item is not None:
             self.transform_item = transform_item
+        self.join_fn = join_fn
         self.parallelizer = parallelizer
         self.args = args
         self.kwargs = kwargs
+
+
+    @classmethod
+    def fork(
+        cls, f: Callable, iterable: Iterable, *args,
+        recurse: Optional[bool] = True, **kwargs
+    ) -> Generator:
+        if recurse:
+            for item in iterable:
+                if isinstance(item, data.Data) or isinstance(item, Iterator):
+                    yield from cls.fork(f, item, *args, recurse=recurse, **kwargs)
+                else:
+                    yield f, item, args, kwargs
+        else:
+            for item in iterable:
+                yield f, item, args, kwargs           
 
 
     @classmethod
@@ -43,10 +61,16 @@ class Transformer:
         def decorator(fn: Callable):
             @functools.wraps(fn)
             def wrapper(*wargs, **wkwargs):
-                yield from self.join(
-                    self.parallelizer.fork(
-                        self.transform_item, fn(*wargs, **wkwargs), *args, 
-                        **kwargs,
+                if self.join_fn is not None:
+                    join = self.join_fn
+                else:
+                    join = self.join
+                yield from join(
+                    self.parallelizer(
+                        self.fork(
+                            self.transform_item, fn(*wargs, **wkwargs), *args, 
+                            recurse=recurse, **kwargs,
+                        ),
                     ),
                     recurse=recurse
                 )
@@ -69,7 +93,7 @@ class Transformer:
 
 
     def __call__(self, data: data.Data, *args, **kwargs):
-        return self.transform(data, *args, *self.args, **kwargs, **self.kwargs)
+        return self.transform(data, *args, **kwargs)
 
 
     def __ror__(self, data: data.Data):
@@ -96,36 +120,36 @@ class Transformer:
         return self(data, return_copy=False) 
 
 
-class Pipeline(Transformer):
-    __name__: str = "Pipeline"
+# class Pipeline(Transformer):
+#     __name__: str = "Pipeline"
 
 
-    def __init__(
-        self, transformers: Iterable[Transformer],
-        parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer,
-        *args, **kwargs
-    ):
-        self.transformers = transformers
-        self.parallelizer = parallelizer
-        self.args = args
-        self.kwargs = kwargs
+#     def __init__(
+#         self, transformers: Iterable[Transformer],
+#         parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer,
+#         *args, **kwargs
+#     ):
+#         self.transformers = transformers
+#         self.parallelizer = parallelizer
+#         self.args = args
+#         self.kwargs = kwargs
 
 
-    def transform_item(self, item: Any, *args, **kwargs):
-        for transformer in self.transformers:
-            item = transformer.transform_item(
-                item, *args, *self.args, **kwargs, **self.kwargs
-            )
-        return item
+#     def transform_item(self, item: Any, *args, **kwargs):
+#         for transformer in self.transformers:
+#             item = transformer.transform_item(
+#                 item, *args, *self.args, **kwargs, **self.kwargs
+#             )
+#         return item
 
 
-    def transform(
-        self, data: data.Data, *args, return_copy: Optional[bool] = True,
-        **kwargs
-    ) -> data.Data:
-        for transformer in self.transformers:
-            data = transformer.transform(
-                data, *args, return_copy=return_copy, **kwargs,
-            )
-        return data
+#     def transform(
+#         self, data: data.Data, *args, return_copy: Optional[bool] = True,
+#         **kwargs
+#     ) -> data.Data:
+#         for transformer in self.transformers:
+#             data = transformer.transform(
+#                 data, *args, return_copy=return_copy, **kwargs,
+#             )
+#         return data
     
