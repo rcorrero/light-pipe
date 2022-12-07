@@ -37,24 +37,6 @@ from light_pipe.blocking_executors import (BlockingProcessPoolExecutor,
 
 
 class Parallelizer:
-    # @classmethod
-    # def fork(
-    #     cls, f: Callable, iterable: Iterable, *args, 
-    #     recurse: Optional[bool] = True, **kwargs
-    # ) -&gt; Generator:
-    #     if recurse:
-    #         results = [
-    #             cls.fork(f, item, *args, recurse=recurse, **kwargs) if \
-    #                 (isinstance(item, data.Data) or isinstance(item, Iterator)) else \
-    #                 f(item, *args, **kwargs) for item in iterable
-    #         ]
-    #     else:
-    #         results = [
-    #             f(item, *args, **kwargs) for item in iterable
-    #         ]
-    #     yield from results
-
-
     def __call__(
         self, iterable: Iterable    
     ):
@@ -220,169 +202,6 @@ class BlockingProcessPooler(BlockingPooler):
         super().__init__(
             *args, DefaultBlockingExecutor=DefaultBlockingExecutor, **kwargs
         )           
-
-
-# class ThreadPooler(Pooler):
-#     def __init__(
-#         self, *args, 
-#         DefaultExecutor: Optional[type] = concurrent.futures.ThreadPoolExecutor,
-#         **kwargs
-#     ):
-#         super().__init__(*args, DefaultExecutor=DefaultExecutor, **kwargs)
-
-    # # @TODO: Make recursive
-    # def fork(
-    #     self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None,
-    #     executor: Optional[concurrent.futures.ThreadPoolExecutor] = None,
-    #     *args, **kwargs) -&gt; Generator:
-    #     if executor is None:
-    #         executor = self.executor
-    #     if max_workers is None:
-    #         max_workers = self.max_workers
-
-    #     if executor is not None:
-    #         futures = [
-    #             executor.submit(f, item, *args, **kwargs) for item in iterable
-    #         ]
-    #         for future in concurrent.futures.as_completed(futures):
-    #             yield future.result()
-    #     else:
-    #         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-    #             futures = [
-    #                 executor.submit(f, item, *args, **kwargs) for item in iterable
-    #             ]
-    #             for future in concurrent.futures.as_completed(futures):
-    #                 yield future.result()
-
-
-    # def __call__(
-    #     self, iterable: Iterable, max_workers: Optional[int] = None,
-    #     executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
-    # ) -&gt; Generator:
-    #     if executor is None:
-    #         executor = self.executor
-    #     if max_workers is None:
-    #         max_workers = self.max_workers
-
-    #     if executor is not None:
-    #         futures = [
-    #             executor.submit(f, item, *args, **kwargs) for 
-    #             f, item, args, kwargs in iterable
-    #         ]
-    #         for future in concurrent.futures.as_completed(futures):
-    #             yield future.result()
-    #     else:
-    #         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-    #             futures = [
-    #                 executor.submit(f, item, *args, **kwargs) for 
-    #                 f, item, args, kwargs in iterable
-    #             ]
-    #             for future in concurrent.futures.as_completed(futures):
-    #                 yield future.result()    
-
-
-
-# class BlockingThreadPooler(Parallelizer):
-#     def __init__(
-#         self, max_workers: Optional[int] = None, queue_size: Optional[int] = None,
-#         executor: Optional[BlockingThreadPoolExecutor] = None
-#     ):
-#         if executor is None:
-#             assert max_workers is not None and queue_size is not None, \
-#                 &#34;Both `max_workers` and `queue_size` must be set if `executor` is not passed.&#34;
-#         self.max_workers = max_workers
-#         self.queue_size = queue_size
-#         self.executor = executor
-
-
-#     def _blocking_submitter(
-#         self,  iterable: Iterable, executor: BlockingThreadPoolExecutor,
-#     ) -&gt; Generator:
-#         futures = dict()
-#         exhausted = False
-#         while True:
-#             while not exhausted and not executor._work_queue.full():
-#                 try:
-#                     f, item, args, kwargs = next(iterable)
-#                 except StopIteration:
-#                     exhausted = True
-#                     break
-#                 futures[executor.submit(f, item, *args, **kwargs)] = &#34;Done&#34;
-#             if futures: # There&#39;s at least one task left to await
-#                 done, _ = concurrent.futures.wait(
-#                     futures, return_when=concurrent.futures.FIRST_COMPLETED
-#                 ) # Will block until at least one future finishes or cancels
-#                 future = done.pop()
-#                 yield future.result()
-#                 del(futures[future])
-#             else:
-#                 break
-
-
-#     def __call__(
-#         self, iterable: Iterable, max_workers: Optional[int] = None,
-#         queue_size: Optional[int] = None,
-#         executor: Optional[BlockingThreadPoolExecutor] = None,
-#     ) -&gt; Generator:
-#         if max_workers is None:
-#             max_workers = self.max_workers
-#         if queue_size is None:
-#             queue_size = self.queue_size
-#         if executor is None:
-#             executor = self.executor     
-
-#         if executor is not None:
-#             yield from self._blocking_submitter(
-#                 iterable=iterable, executor=executor
-#             )
-#         else:
-#             with BlockingThreadPoolExecutor(
-#                 max_workers=max_workers, queue_size=queue_size
-#             ) as executor:
-#                 yield from self._blocking_submitter(
-#                     iterable=iterable, executor=executor
-#                 )               
-
-
-# class ProcessPooler(Parallelizer):
-#     def __init__(
-#         self, max_workers: Optional[int] = None,
-#         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None
-#     ):
-#         # @TODO: IMPLEMENT:
-#         # Checks must be put in place to ensure that inputs and outputs are
-#         # serializable. This means no SWIG objects and no generators.
-#         if executor is None:
-#             assert max_workers is not None, \
-#                 &#34;`max_workers` must be set if `executor` is not passed.&#34;
-#         self.max_workers = max_workers
-#         self.executor = executor
-
-
-#     def __call__(
-#         self, iterable: Iterable, max_workers: Optional[int] = None,
-#         executor: Optional[concurrent.futures.ProcessPoolExecutor] = None,
-#     ) -&gt; Generator:
-#         if executor is None:
-#             executor = self.executor
-#         if max_workers is None:
-#             max_workers = self.max_workers
-
-#         if executor is not None:
-#             futures = [
-#                 executor.submit(f, item, *args, **kwargs) 
-#                 for f, item, args, kwargs in iterable
-#             ]
-#             for future in concurrent.futures.as_completed(futures):
-#                 yield future.result()        
-#         else:
-#             with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-#                 futures = [
-#                     executor.submit(f, item, *args, **kwargs) 
-#                     for f, item, args, kwargs in iterable
-#                 ]
-#                 for future in concurrent.futures.as_completed(futures):
-#                     yield future.result()
 
 
 class AsyncGatherer(Parallelizer):
@@ -636,66 +455,7 @@ class AsyncGatherer(Parallelizer):
     ):
         super().__init__(
             *args, DefaultBlockingExecutor=DefaultBlockingExecutor, **kwargs
-        )           
-
-
-# class ThreadPooler(Pooler):
-#     def __init__(
-#         self, *args, 
-#         DefaultExecutor: Optional[type] = concurrent.futures.ThreadPoolExecutor,
-#         **kwargs
-#     ):
-#         super().__init__(*args, DefaultExecutor=DefaultExecutor, **kwargs)
-
-    # # @TODO: Make recursive
-    # def fork(
-    #     self, f: Callable, iterable: Iterable, max_workers: Optional[int] = None,
-    #     executor: Optional[concurrent.futures.ThreadPoolExecutor] = None,
-    #     *args, **kwargs) -&gt; Generator:
-    #     if executor is None:
-    #         executor = self.executor
-    #     if max_workers is None:
-    #         max_workers = self.max_workers
-
-    #     if executor is not None:
-    #         futures = [
-    #             executor.submit(f, item, *args, **kwargs) for item in iterable
-    #         ]
-    #         for future in concurrent.futures.as_completed(futures):
-    #             yield future.result()
-    #     else:
-    #         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-    #             futures = [
-    #                 executor.submit(f, item, *args, **kwargs) for item in iterable
-    #             ]
-    #             for future in concurrent.futures.as_completed(futures):
-    #                 yield future.result()
-
-
-    # def __call__(
-    #     self, iterable: Iterable, max_workers: Optional[int] = None,
-    #     executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
-    # ) -&gt; Generator:
-    #     if executor is None:
-    #         executor = self.executor
-    #     if max_workers is None:
-    #         max_workers = self.max_workers
-
-    #     if executor is not None:
-    #         futures = [
-    #             executor.submit(f, item, *args, **kwargs) for 
-    #             f, item, args, kwargs in iterable
-    #         ]
-    #         for future in concurrent.futures.as_completed(futures):
-    #             yield future.result()
-    #     else:
-    #         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-    #             futures = [
-    #                 executor.submit(f, item, *args, **kwargs) for 
-    #                 f, item, args, kwargs in iterable
-    #             ]
-    #             for future in concurrent.futures.as_completed(futures):
-    #                 yield future.result()    </code></pre>
+        )           </code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -739,24 +499,6 @@ class AsyncGatherer(Parallelizer):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Parallelizer:
-    # @classmethod
-    # def fork(
-    #     cls, f: Callable, iterable: Iterable, *args, 
-    #     recurse: Optional[bool] = True, **kwargs
-    # ) -&gt; Generator:
-    #     if recurse:
-    #         results = [
-    #             cls.fork(f, item, *args, recurse=recurse, **kwargs) if \
-    #                 (isinstance(item, data.Data) or isinstance(item, Iterator)) else \
-    #                 f(item, *args, **kwargs) for item in iterable
-    #         ]
-    #     else:
-    #         results = [
-    #             f(item, *args, **kwargs) for item in iterable
-    #         ]
-    #     yield from results
-
-
     def __call__(
         self, iterable: Iterable    
     ):

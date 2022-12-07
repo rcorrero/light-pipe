@@ -10,7 +10,7 @@ __doc__ = """
 
 ---
 
-## Update (2022/10/18)
+## Update (2022/12/07)
 
 Light-Pipe is under heavy construction. The core abstractions are now found in Light-Pipe (`light_pipe`): the geospatial-specific functionalities have been refactored into another package, called Light-Pipe-Geo (`light_pipe_geo`). The core package now has __zero__ dependencies: just pure Python. The core library contains abstractions that facilitate parallelization and scalability. The plan is to create multiple packages, like Light-Pipe-Geo, that use Light-Pipe to solve domain-specific problems in an elegant, scalable manner. Orthogonalizing across use-cases like this allows you to import only the package(s) you need for your specific problem domain.
 

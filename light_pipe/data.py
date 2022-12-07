@@ -4,14 +4,13 @@ from typing import Callable, List, Optional
 class Data:
     def __init__(
         self, generator: Optional[Callable] = None, 
-        store_results: Optional[bool] = False, # results: Optional[Iterable] = None,
+        store_results: Optional[bool] = False,
         _results_stored: Optional[bool] = False,
         *args, **kwargs
     ):
         self.generator = generator
         self.store_results = store_results
         self._results_stored = _results_stored        
-        # self.results = results
         self.args = args
         self.kwargs = kwargs
 
@@ -33,35 +32,14 @@ class Data:
         args = (*args, *self.args)
         kwargs = {**kwargs, **self.kwargs}
         if not self._results_stored and self.store_results:
-            # if self.results is not None:
-            #     yield from self.results
-            # else:
             results = list()
             for res in self.generator(*args, **kwargs):
                 results.append(res)
                 yield res
-            # self.results = iter(results)
             self.generator = self._yield_results(results)
             self._results_stored = True
         else:
             yield from self.generator(*args, **kwargs)        
-
-
-    # def generate(self, *args, **kwargs):
-    #     args = (*args, *self.args)
-    #     kwargs = {**kwargs, **self.kwargs}
-    #     if self.store_results:
-    #         if self.results is not None:
-    #             yield from self.results
-    #         else:
-    #             results = list()
-    #             for res in self.generator(*args, **kwargs):
-    #                 results.append(res)
-    #                 yield res
-    #             self.results = iter(results)
-    #             self.generator = self._yield_results(results)
-    #     else:
-    #         yield from self.generator(*args, **kwargs)
 
 
     def block(self, *args, no_return: Optional[bool] = False, **kwargs):
@@ -83,23 +61,18 @@ class Data:
 
 
     def __iter__(self):
-        # if self.store_results and self.results is not None:
-        #     return self.results
-        # else:
         return self()        
 
 
     def __enter__(
         self, generator: Optional[Callable] = None, 
-        store_results: Optional[bool] = None, # results: Optional[Any] = None,
+        store_results: Optional[bool] = None,
         *args, **kwargs
     ):
         if generator is not None:
             self.generator = generator
         if store_results is not None:
             self.store_results = store_results
-        # if results is not None:
-        #     self.results = results
         self.args = (*args, *self.args)
         self.kwargs = {**kwargs, **self.kwargs}
         return self
@@ -119,7 +92,6 @@ class Data:
     def copy(
         self, generator: Optional[Callable] = None, 
         store_results: Optional[bool] = None,
-        # copy_results: Optional[bool] = True, results: Optional[Any] = None,
         *args, **kwargs
     ):
         if generator is None:
@@ -127,8 +99,6 @@ class Data:
         if store_results is None:
             store_results = self.store_results
         _results_stored = self._results_stored
-        # if copy_results and results is None:
-        #     results = self.results
         args = (*args, *self.args)
         kwargs = {**kwargs, **self.kwargs}
         return self._copy(

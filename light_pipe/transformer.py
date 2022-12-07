@@ -118,38 +118,4 @@ class Transformer:
 
     def __rrshift__(self, data: data.Data):
         return self(data, return_copy=False) 
-
-
-# class Pipeline(Transformer):
-#     __name__: str = "Pipeline"
-
-
-#     def __init__(
-#         self, transformers: Iterable[Transformer],
-#         parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer,
-#         *args, **kwargs
-#     ):
-#         self.transformers = transformers
-#         self.parallelizer = parallelizer
-#         self.args = args
-#         self.kwargs = kwargs
-
-
-#     def transform_item(self, item: Any, *args, **kwargs):
-#         for transformer in self.transformers:
-#             item = transformer.transform_item(
-#                 item, *args, *self.args, **kwargs, **self.kwargs
-#             )
-#         return item
-
-
-#     def transform(
-#         self, data: data.Data, *args, return_copy: Optional[bool] = True,
-#         **kwargs
-#     ) -> data.Data:
-#         for transformer in self.transformers:
-#             data = transformer.transform(
-#                 data, *args, return_copy=return_copy, **kwargs,
-#             )
-#         return data
     

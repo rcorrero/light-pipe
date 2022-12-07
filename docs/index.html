@@ -24,7 +24,7 @@
 <section id="section-intro">
 <h1 id="light-pipe"><a href="https://github.com/rcorrero/light-pipe">Light-Pipe</a></h1>
 <hr>
-<h2 id="update-20221018">Update (2022/10/18)</h2>
+<h2 id="update-20221207">Update (2022/12/07)</h2>
 <p>Light-Pipe is under heavy construction. The core abstractions are now found in Light-Pipe (<code><a title="light_pipe" href="#light_pipe">light_pipe</a></code>): the geospatial-specific functionalities have been refactored into another package, called Light-Pipe-Geo (<code>light_pipe_geo</code>). The core package now has <strong>zero</strong> dependencies: just pure Python. The core library contains abstractions that facilitate parallelization and scalability. The plan is to create multiple packages, like Light-Pipe-Geo, that use Light-Pipe to solve domain-specific problems in an elegant, scalable manner. Orthogonalizing across use-cases like this allows you to import only the package(s) you need for your specific problem domain.</p>
 <h2 id="overview">Overview</h2>
 <p><a href="https://www.light-pipe.io/">Light-Pipe</a> is an open-source Python package that efficiently and losslessly creates analysis-ready samples from georeferenced data to facilitate the deployment of computer vision models at scale. It also provides tools to post-process model outputs and prepare them for interpretation. Light-Pipe is designed to scale effortlessly, being built from the ground-up to support concurrency in all its forms. It's also light-weight, with only one dependency, designed to do its job and get out of the way, and to force as few assumptions as possible on the user. Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause License</a>. It is currently under heavy development, and every update is liable to break backwards-compatibility.</p>
@@ -127,7 +127,7 @@ __doc__ = &#34;&#34;&#34;
 
 ---
 
-## Update (2022/10/18)
+## Update (2022/12/07)
 
 Light-Pipe is under heavy construction. The core abstractions are now found in Light-Pipe (`light_pipe`): the geospatial-specific functionalities have been refactored into another package, called Light-Pipe-Geo (`light_pipe_geo`). The core package now has __zero__ dependencies: just pure Python. The core library contains abstractions that facilitate parallelization and scalability. The plan is to create multiple packages, like Light-Pipe-Geo, that use Light-Pipe to solve domain-specific problems in an elegant, scalable manner. Orthogonalizing across use-cases like this allows you to import only the package(s) you need for your specific problem domain.
 
@@ -252,7 +252,7 @@ Copyright 2020-2022 [Richard Correro](https://www.richardcorrero.com/).
 <div class="toc">
 <ul>
 <li><a href="#light-pipe">Light-Pipe</a><ul>
-<li><a href="#update-20221018">Update (2022/10/18)</a></li>
+<li><a href="#update-20221207">Update (2022/12/07)</a></li>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#comparing-light-pipe-with-existing-packages">Comparing Light-Pipe With Existing Packages</a><ul>
 <li><a href="#raster-tiling">Raster Tiling</a><ul>
