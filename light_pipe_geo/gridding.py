@@ -49,6 +49,7 @@ def make_grid_cell_dataset(
     default_dtype = gdal.GDT_Byte, default_n_bands = 1, 
     use_ancestor_driver = False, grid_cell_filepath: Optional[str] = None,
     default_driver_name: Optional[str] = "GTIff",
+    no_data_value = None,
     *args, **kwargs
 ):
     if datum_filepath is None:
@@ -102,7 +103,7 @@ def make_grid_cell_dataset(
         datum, grid_cell_dataset = raster_trans.translate_dataset(
             datum, grid_cell_filepath, raster_x_size, raster_y_size, n_bands, 
             dtype, geotransform, projection, driver_name, srs, ulx=minx, uly=maxy, 
-            lrx=maxx, lry=miny, *args, **kwargs
+            lrx=maxx, lry=miny, noData=no_data_value, *args, **kwargs
         )
     else:
         raise TypeError("Input must be a `gdal.Dataset` or `ogr.DataSource` instance.")

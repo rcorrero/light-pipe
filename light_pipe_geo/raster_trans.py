@@ -23,7 +23,7 @@ def translate_dataset(
     dataset: gdal.Dataset, filepath: str, raster_x_size: int,
     raster_y_size: int, n_bands: int, dtype, geotransform, projection, driver_name,
     srs: osr.SpatialReference, ulx: Union[float, int], uly: Union[float, int], 
-    lrx: Union[float, int], lry: Union[float, int], *args, **kwargs
+    lrx: Union[float, int], lry: Union[float, int], noData = None, *args, **kwargs
 ):
     proj_win = [ulx, uly, lrx, lry]
     band_list = [i for i in range(1, n_bands + 1)]
@@ -31,7 +31,7 @@ def translate_dataset(
         filepath, dataset,
         format=driver_name, outputType=dtype, bandList=band_list, 
         width=raster_x_size, height=raster_y_size, projWin=proj_win, 
-        projWinSRS=srs, outputBounds=proj_win,
+        projWinSRS=srs, outputBounds=proj_win, noData=noData
     )
     out_dataset.SetGeoTransform(geotransform)
     out_dataset.SetProjection(projection)
