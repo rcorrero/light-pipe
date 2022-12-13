@@ -1,3 +1,6 @@
+__author__ = "Richard Correro (rcorrero@stanford.edu)"
+
+
 from typing import Callable, List, Optional
 
 

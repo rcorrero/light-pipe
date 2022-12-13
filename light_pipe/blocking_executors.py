@@ -1,3 +1,6 @@
+__author__ = "Richard Correro (rcorrero@stanford.edu)"
+
+
 import queue
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 

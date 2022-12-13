@@ -1,3 +1,6 @@
+__author__ = "Richard Correro (rcorrero@stanford.edu)"
+
+
 import functools
 from typing import Callable, Generator, Iterable, Iterator, Optional
 
