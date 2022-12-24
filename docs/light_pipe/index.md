@@ -1,3 +1,5 @@
+Module light_pipe
+=================
 # [Light-Pipe](https://github.com/rcorrero/light-pipe)
 
 ---
@@ -15,3 +17,9 @@
 ---
 
 Copyright 2020-2023 [Richard Correro](https://www.richardcorrero.com/).
+
+Sub-modules
+-----------
+* light_pipe.data
+* light_pipe.parallelizer
+* light_pipe.transformer

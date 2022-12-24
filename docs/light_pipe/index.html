@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>light_pipe.blocking_executors API documentation</title>
-<meta name="description" content="" />
+<title>light_pipe API documentation</title>
+<meta name="description" content="[Light-Pipe](https://github.com/rcorrero/light-pipe) …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,130 +19,97 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>light_pipe.blocking_executors</code></h1>
+<h1 class="title">Package <code>light_pipe</code></h1>
 </header>
 <section id="section-intro">
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">import queue
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-
-
-class BlockingThreadPoolExecutor(ThreadPoolExecutor):
-    def __init__(self, *args, queue_size=0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._work_queue = queue.Queue(queue_size)
-
-
-class BlockingProcessPoolExecutor(ProcessPoolExecutor):
-    def __init__(self, *args, queue_size=0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._work_queue = queue.Queue(queue_size)        </code></pre>
-</details>
-</section>
-<section>
-</section>
-<section>
-</section>
-<section>
-</section>
-<section>
-<h2 class="section-title" id="header-classes">Classes</h2>
-<dl>
-<dt id="light_pipe.blocking_executors.BlockingProcessPoolExecutor"><code class="flex name class">
-<span>class <span class="ident">BlockingProcessPoolExecutor</span></span>
-<span>(</span><span>*args, queue_size=0, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>This is an abstract base class for concrete asynchronous executors.</p>
-<p>Initializes a new ProcessPoolExecutor instance.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>max_workers</code></strong></dt>
-<dd>The maximum number of processes that can be used to
-execute the given calls. If None or not given then as many
-worker processes will be created as the machine has processors.</dd>
-<dt><strong><code>mp_context</code></strong></dt>
-<dd>A multiprocessing context to launch the workers. This
-object should provide SimpleQueue, Queue and Process.</dd>
-<dt><strong><code>initializer</code></strong></dt>
-<dd>A callable used to initialize worker processes.</dd>
-<dt><strong><code>initargs</code></strong></dt>
-<dd>A tuple of arguments to pass to the initializer.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class BlockingProcessPoolExecutor(ProcessPoolExecutor):
-    def __init__(self, *args, queue_size=0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._work_queue = queue.Queue(queue_size)        </code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>concurrent.futures.process.ProcessPoolExecutor</li>
-<li>concurrent.futures._base.Executor</li>
+<h1 id="light-pipe"><a href="https://github.com/rcorrero/light-pipe">Light-Pipe</a></h1>
+<hr>
+<h2 id="overview">Overview</h2>
+<p><a href="https://www.light-pipe.io/">Light-Pipe</a> is an extensible, light-weight Python framework for data pipelines that scale. It provides a set of intuitive abstractions designed to decouple pipeline implementation from the operations performed within the pipeline. It is designed to scale effortlessly, being built from the ground-up to support concurrency in all its forms, and it has zero non-standard dependencies. Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause License</a>.</p>
+<h2 id="more-information">More Information</h2>
+<ul>
+<li>
+<p><a href="https://github.com/rcorrero/light-pipe">GitHub</a></p>
+</li>
+<li>
+<p><a href="https://www.light-pipe.io/">Documentation</a></p>
+</li>
 </ul>
+<hr>
+<p>Copyright 2020-2023 <a href="https://www.richardcorrero.com/">Richard Correro</a>.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">__author__ = &#34;Richard Correro (rcorrero@gmail.com)&#34;
+
+
+from .data import *
+from .parallelizer import *
+from .transformer import *
+
+__doc__ = &#34;&#34;&#34;
+# [Light-Pipe](https://github.com/rcorrero/light-pipe)
+
+---
+
+## Overview
+
+[Light-Pipe](https://www.light-pipe.io/) is an extensible, light-weight Python framework for data pipelines that scale. It provides a set of intuitive abstractions designed to decouple pipeline implementation from the operations performed within the pipeline. It is designed to scale effortlessly, being built from the ground-up to support concurrency in all its forms, and it has zero non-standard dependencies. Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+
+## More Information
+
+- [GitHub](https://github.com/rcorrero/light-pipe)
+
+- [Documentation](https://www.light-pipe.io/)
+
+---
+
+Copyright 2020-2023 [Richard Correro](https://www.richardcorrero.com/).
+&#34;&#34;&#34;</code></pre>
+</details>
+</section>
+<section>
+<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+<dl>
+<dt><code class="name"><a title="light_pipe.data" href="data.html">light_pipe.data</a></code></dt>
+<dd>
+<div class="desc"></div>
 </dd>
-<dt id="light_pipe.blocking_executors.BlockingThreadPoolExecutor"><code class="flex name class">
-<span>class <span class="ident">BlockingThreadPoolExecutor</span></span>
-<span>(</span><span>*args, queue_size=0, **kwargs)</span>
-</code></dt>
+<dt><code class="name"><a title="light_pipe.parallelizer" href="parallelizer.html">light_pipe.parallelizer</a></code></dt>
 <dd>
-<div class="desc"><p>This is an abstract base class for concrete asynchronous executors.</p>
-<p>Initializes a new ThreadPoolExecutor instance.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>max_workers</code></strong></dt>
-<dd>The maximum number of threads that can be used to
-execute the given calls.</dd>
-<dt><strong><code>thread_name_prefix</code></strong></dt>
-<dd>An optional name prefix to give our threads.</dd>
-<dt><strong><code>initializer</code></strong></dt>
-<dd>A callable used to initialize worker threads.</dd>
-<dt><strong><code>initargs</code></strong></dt>
-<dd>A tuple of arguments to pass to the initializer.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class BlockingThreadPoolExecutor(ThreadPoolExecutor):
-    def __init__(self, *args, queue_size=0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._work_queue = queue.Queue(queue_size)</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>concurrent.futures.thread.ThreadPoolExecutor</li>
-<li>concurrent.futures._base.Executor</li>
-</ul>
+<div class="desc"></div>
+</dd>
+<dt><code class="name"><a title="light_pipe.transformer" href="transformer.html">light_pipe.transformer</a></code></dt>
+<dd>
+<div class="desc"></div>
 </dd>
 </dl>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
 </section>
 </article>
 <nav id="sidebar">
 <h1>Index</h1>
 <div class="toc">
-<ul></ul>
-</div>
-<ul id="index">
-<li><h3>Super-module</h3>
 <ul>
-<li><code><a title="light_pipe" href="index.html">light_pipe</a></code></li>
+<li><a href="#light-pipe">Light-Pipe</a><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#more-information">More Information</a></li>
 </ul>
 </li>
-<li><h3><a href="#header-classes">Classes</a></h3>
+</ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
-<li>
-<h4><code><a title="light_pipe.blocking_executors.BlockingProcessPoolExecutor" href="#light_pipe.blocking_executors.BlockingProcessPoolExecutor">BlockingProcessPoolExecutor</a></code></h4>
-</li>
-<li>
-<h4><code><a title="light_pipe.blocking_executors.BlockingThreadPoolExecutor" href="#light_pipe.blocking_executors.BlockingThreadPoolExecutor">BlockingThreadPoolExecutor</a></code></h4>
-</li>
+<li><code><a title="light_pipe.data" href="data.html">light_pipe.data</a></code></li>
+<li><code><a title="light_pipe.parallelizer" href="parallelizer.html">light_pipe.parallelizer</a></code></li>
+<li><code><a title="light_pipe.transformer" href="transformer.html">light_pipe.transformer</a></code></li>
 </ul>
 </li>
 </ul>

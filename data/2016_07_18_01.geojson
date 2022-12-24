@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "2016_07_18_01_pchx.kml",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "Name": "2016_07_18_01_pchx", "tessellate": 1, "extrude": 0, "visibility": -1 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -46.199523163946488, -14.65002585428725 ], [ -46.19966089664905, -14.64995684830393 ], [ -46.199841721812071, -14.650353671568899 ], [ -46.199698110499227, -14.650396898220039 ], [ -46.199523163946488, -14.65002585428725 ] ] ] } }
-]
-}

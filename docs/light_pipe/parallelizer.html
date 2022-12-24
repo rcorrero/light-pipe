@@ -26,14 +26,16 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import asyncio
+<pre><code class="python">__author__ = &#34;Richard Correro (rcorrero@gmail.com)&#34;
+
+
+import asyncio
 import concurrent.futures
 import functools
+import time
+import unittest
 from typing import (Any, AsyncGenerator, Callable, Coroutine, Generator,
                     Iterable, List, Optional, Tuple, Union)
-
-from light_pipe.blocking_executors import (BlockingProcessPoolExecutor,
-                                           BlockingThreadPoolExecutor)
 
 
 class Parallelizer:
@@ -113,8 +115,8 @@ class BlockingPooler(Parallelizer):
         self, max_workers: Optional[int] = None, queue_size: Optional[int] = None,
         DefaultBlockingExecutor: Optional[type] = None,
         executor: Optional[Union[
-            BlockingThreadPoolExecutor, 
-            BlockingProcessPoolExecutor
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
         ]] = None
     ):
         if executor is None:
@@ -127,30 +129,35 @@ class BlockingPooler(Parallelizer):
 
 
     def _blocking_submitter(
-        self,  iterable: Iterable,
+        self,  iterable: Iterable, queue_size: int,
         executor: Optional[Union[
-            BlockingThreadPoolExecutor, 
-            BlockingProcessPoolExecutor
-        ]] = None        
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
+        ]] = None,
     ) -&gt; Generator:
         futures = dict()
         exhausted = False
+        num_submitted = 0
         while True:
-            while not exhausted and not executor._work_queue.full():
+            while not exhausted and num_submitted &lt; queue_size:
                 try:
                     f, item, args, kwargs = next(iterable)
                 except StopIteration:
                     exhausted = True
                     break
                 futures[executor.submit(f, item, *args, **kwargs)] = &#34;Done&#34;
+                num_submitted += 1
             if futures: # There&#39;s at least one task left to await
                 done, _ = concurrent.futures.wait(
                     futures, return_when=concurrent.futures.FIRST_COMPLETED
                 ) # Will block until at least one future finishes or cancels
                 future = done.pop()
                 yield future.result()
+                num_submitted -= 1
                 del(futures[future])
             else:
+                assert num_submitted == 0, \
+                    f&#34;There are still {num_submitted} tasks left to await.&#34;
                 break
 
 
@@ -158,8 +165,8 @@ class BlockingPooler(Parallelizer):
         self, iterable: Iterable, max_workers: Optional[int] = None,
         queue_size: Optional[int] = None,
         executor: Optional[Union[
-            BlockingThreadPoolExecutor, 
-            BlockingProcessPoolExecutor
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
         ]] = None
     ) -&gt; Generator:
         if max_workers is None:
@@ -171,21 +178,21 @@ class BlockingPooler(Parallelizer):
 
         if executor is not None:
             yield from self._blocking_submitter(
-                iterable=iterable, executor=executor
+                iterable=iterable, queue_size=queue_size, executor=executor
             )
         else:
             with self.DefaultBlockingExecutor(
-                max_workers=max_workers, queue_size=queue_size
+                max_workers=max_workers,
             ) as executor:
                 yield from self._blocking_submitter(
-                    iterable=iterable, executor=executor
+                    iterable=iterable, queue_size=queue_size, executor=executor
                 )
 
 
 class BlockingThreadPooler(BlockingPooler):
     def __init__(
         self, *args, 
-        DefaultBlockingExecutor: Optional[type] = BlockingThreadPoolExecutor,
+        DefaultBlockingExecutor: Optional[type] = concurrent.futures.ThreadPoolExecutor,
         **kwargs
     ):
         super().__init__(
@@ -196,7 +203,7 @@ class BlockingThreadPooler(BlockingPooler):
 class BlockingProcessPooler(BlockingPooler):
     def __init__(
         self, *args, 
-        DefaultBlockingExecutor: Optional[type] = BlockingProcessPoolExecutor,
+        DefaultBlockingExecutor: Optional[type] = concurrent.futures.ProcessPoolExecutor,
         **kwargs
     ):
         super().__init__(
@@ -205,6 +212,16 @@ class BlockingProcessPooler(BlockingPooler):
 
 
 class AsyncGatherer(Parallelizer):
+    def _make_async_decorator(self, f: Callable):
+        @functools.wraps(f)
+        async def async_wrapper(*args, **kwargs):
+            result = f(*args, **kwargs)
+            if isinstance(result, Coroutine):
+                return await result
+            return result
+        return async_wrapper
+
+
     def _get_tasks(
         self, iterable: Iterable, **kwargs
     ) -&gt; List[asyncio.Task]:
@@ -222,16 +239,6 @@ class AsyncGatherer(Parallelizer):
         for result in asyncio.as_completed(tasks):
             result = await result
             yield result
-
-
-    def _make_async_decorator(self, f: Callable):
-        @functools.wraps(f)
-        async def async_wrapper(*args, **kwargs):
-            result = f(*args, **kwargs)
-            if isinstance(result, Coroutine):
-                return await result
-            return result
-        return async_wrapper
 
 
     def _iter(self, loop: asyncio.AbstractEventLoop, async_generator: AsyncGenerator):
@@ -260,7 +267,77 @@ class AsyncGatherer(Parallelizer):
         if loop is None:
             loop = asyncio.get_event_loop()
         async_generator = self._async_gen(iterable)
-        yield from self._iter(loop, async_generator)</code></pre>
+        yield from self._iter(loop, async_generator)
+
+
+class TestParallelizers(unittest.TestCase):
+    @staticmethod
+    def task(num_tasks_submitted: int):
+        num_tasks_submitted[0] += 1       
+
+
+    def test_blocking_thread_pooler(self):
+        num_tasks_submitted = [0]
+
+
+        def gen(num_tasks):
+            iterable = [
+                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
+            ]
+            yield from iterable
+
+
+        num_tasks = 1000
+        iterable = gen(num_tasks=num_tasks)
+
+        max_workers = 8
+        queue_size = 3
+        p = BlockingThreadPooler(max_workers=max_workers, queue_size=queue_size)        
+        for _ in p(iterable=iterable):
+            assert num_tasks_submitted[0] &lt;= queue_size
+            num_tasks_submitted[0] -= 1
+
+
+    def test_blocking_process_pooler(self):
+        num_tasks_submitted = [0]
+
+
+        def gen(num_tasks):
+            iterable = [
+                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
+            ]
+            yield from iterable
+
+
+        num_tasks = 1000
+        iterable = gen(num_tasks=num_tasks)
+
+        max_workers = 8
+        queue_size = 3
+        p = BlockingProcessPooler(max_workers=max_workers, queue_size=queue_size)        
+        for _ in p(iterable=iterable):
+            assert num_tasks_submitted[0] &lt;= queue_size
+            num_tasks_submitted[0] -= 1            
+        
+
+    def test_async_gatherer(self):
+        async def sleep(seconds: int, *args, **kwargs):
+            await asyncio.sleep(seconds)
+
+
+        num_tasks = 1000
+        seconds = 1
+        iterable = [
+            (sleep, seconds, list(), dict()) for _ in range(num_tasks)
+        ]
+        start = time.time()
+        list(AsyncGatherer()(iterable=iterable))
+        end = time.time()
+        self.assertLessEqual(end - start, 1.5 * seconds)
+
+
+if __name__ == &#34;__main__&#34;:
+    unittest.main()</code></pre>
 </details>
 </section>
 <section>
@@ -282,6 +359,16 @@ class AsyncGatherer(Parallelizer):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class AsyncGatherer(Parallelizer):
+    def _make_async_decorator(self, f: Callable):
+        @functools.wraps(f)
+        async def async_wrapper(*args, **kwargs):
+            result = f(*args, **kwargs)
+            if isinstance(result, Coroutine):
+                return await result
+            return result
+        return async_wrapper
+
+
     def _get_tasks(
         self, iterable: Iterable, **kwargs
     ) -&gt; List[asyncio.Task]:
@@ -299,16 +386,6 @@ class AsyncGatherer(Parallelizer):
         for result in asyncio.as_completed(tasks):
             result = await result
             yield result
-
-
-    def _make_async_decorator(self, f: Callable):
-        @functools.wraps(f)
-        async def async_wrapper(*args, **kwargs):
-            result = f(*args, **kwargs)
-            if isinstance(result, Coroutine):
-                return await result
-            return result
-        return async_wrapper
 
 
     def _iter(self, loop: asyncio.AbstractEventLoop, async_generator: AsyncGenerator):
@@ -346,7 +423,7 @@ class AsyncGatherer(Parallelizer):
 </dd>
 <dt id="light_pipe.parallelizer.BlockingPooler"><code class="flex name class">
 <span>class <span class="ident">BlockingPooler</span></span>
-<span>(</span><span>max_workers: Optional[int] = None, queue_size: Optional[int] = None, DefaultBlockingExecutor: Optional[type] = None, executor: Union[<a title="light_pipe.blocking_executors.BlockingThreadPoolExecutor" href="blocking_executors.html#light_pipe.blocking_executors.BlockingThreadPoolExecutor">BlockingThreadPoolExecutor</a>, <a title="light_pipe.blocking_executors.BlockingProcessPoolExecutor" href="blocking_executors.html#light_pipe.blocking_executors.BlockingProcessPoolExecutor">BlockingProcessPoolExecutor</a>, ForwardRef(None)] = None)</span>
+<span>(</span><span>max_workers: Optional[int] = None, queue_size: Optional[int] = None, DefaultBlockingExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, ForwardRef(None)] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -359,8 +436,8 @@ class AsyncGatherer(Parallelizer):
         self, max_workers: Optional[int] = None, queue_size: Optional[int] = None,
         DefaultBlockingExecutor: Optional[type] = None,
         executor: Optional[Union[
-            BlockingThreadPoolExecutor, 
-            BlockingProcessPoolExecutor
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
         ]] = None
     ):
         if executor is None:
@@ -373,30 +450,35 @@ class AsyncGatherer(Parallelizer):
 
 
     def _blocking_submitter(
-        self,  iterable: Iterable,
+        self,  iterable: Iterable, queue_size: int,
         executor: Optional[Union[
-            BlockingThreadPoolExecutor, 
-            BlockingProcessPoolExecutor
-        ]] = None        
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
+        ]] = None,
     ) -&gt; Generator:
         futures = dict()
         exhausted = False
+        num_submitted = 0
         while True:
-            while not exhausted and not executor._work_queue.full():
+            while not exhausted and num_submitted &lt; queue_size:
                 try:
                     f, item, args, kwargs = next(iterable)
                 except StopIteration:
                     exhausted = True
                     break
                 futures[executor.submit(f, item, *args, **kwargs)] = &#34;Done&#34;
+                num_submitted += 1
             if futures: # There&#39;s at least one task left to await
                 done, _ = concurrent.futures.wait(
                     futures, return_when=concurrent.futures.FIRST_COMPLETED
                 ) # Will block until at least one future finishes or cancels
                 future = done.pop()
                 yield future.result()
+                num_submitted -= 1
                 del(futures[future])
             else:
+                assert num_submitted == 0, \
+                    f&#34;There are still {num_submitted} tasks left to await.&#34;
                 break
 
 
@@ -404,8 +486,8 @@ class AsyncGatherer(Parallelizer):
         self, iterable: Iterable, max_workers: Optional[int] = None,
         queue_size: Optional[int] = None,
         executor: Optional[Union[
-            BlockingThreadPoolExecutor, 
-            BlockingProcessPoolExecutor
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
         ]] = None
     ) -&gt; Generator:
         if max_workers is None:
@@ -417,14 +499,14 @@ class AsyncGatherer(Parallelizer):
 
         if executor is not None:
             yield from self._blocking_submitter(
-                iterable=iterable, executor=executor
+                iterable=iterable, queue_size=queue_size, executor=executor
             )
         else:
             with self.DefaultBlockingExecutor(
-                max_workers=max_workers, queue_size=queue_size
+                max_workers=max_workers,
             ) as executor:
                 yield from self._blocking_submitter(
-                    iterable=iterable, executor=executor
+                    iterable=iterable, queue_size=queue_size, executor=executor
                 )</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -439,7 +521,7 @@ class AsyncGatherer(Parallelizer):
 </dd>
 <dt id="light_pipe.parallelizer.BlockingProcessPooler"><code class="flex name class">
 <span>class <span class="ident">BlockingProcessPooler</span></span>
-<span>(</span><span>*args, DefaultBlockingExecutor: Optional[type] = light_pipe.blocking_executors.BlockingProcessPoolExecutor, **kwargs)</span>
+<span>(</span><span>*args, DefaultBlockingExecutor: Optional[type] = concurrent.futures.process.ProcessPoolExecutor, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -450,7 +532,7 @@ class AsyncGatherer(Parallelizer):
 <pre><code class="python">class BlockingProcessPooler(BlockingPooler):
     def __init__(
         self, *args, 
-        DefaultBlockingExecutor: Optional[type] = BlockingProcessPoolExecutor,
+        DefaultBlockingExecutor: Optional[type] = concurrent.futures.ProcessPoolExecutor,
         **kwargs
     ):
         super().__init__(
@@ -465,7 +547,7 @@ class AsyncGatherer(Parallelizer):
 </dd>
 <dt id="light_pipe.parallelizer.BlockingThreadPooler"><code class="flex name class">
 <span>class <span class="ident">BlockingThreadPooler</span></span>
-<span>(</span><span>*args, DefaultBlockingExecutor: Optional[type] = light_pipe.blocking_executors.BlockingThreadPoolExecutor, **kwargs)</span>
+<span>(</span><span>*args, DefaultBlockingExecutor: Optional[type] = concurrent.futures.thread.ThreadPoolExecutor, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -476,7 +558,7 @@ class AsyncGatherer(Parallelizer):
 <pre><code class="python">class BlockingThreadPooler(BlockingPooler):
     def __init__(
         self, *args, 
-        DefaultBlockingExecutor: Optional[type] = BlockingThreadPoolExecutor,
+        DefaultBlockingExecutor: Optional[type] = concurrent.futures.ThreadPoolExecutor,
         **kwargs
     ):
         super().__init__(
@@ -601,6 +683,220 @@ class AsyncGatherer(Parallelizer):
 <li><a title="light_pipe.parallelizer.Parallelizer" href="#light_pipe.parallelizer.Parallelizer">Parallelizer</a></li>
 </ul>
 </dd>
+<dt id="light_pipe.parallelizer.TestParallelizers"><code class="flex name class">
+<span>class <span class="ident">TestParallelizers</span></span>
+<span>(</span><span>methodName='runTest')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A class whose instances are single test cases.</p>
+<p>By default, the test code itself should be placed in a method named
+'runTest'.</p>
+<p>If the fixture may be used for many test cases, create as
+many test methods as are needed. When instantiating such a TestCase
+subclass, specify in the constructor arguments the name of the test method
+that the instance is to execute.</p>
+<p>Test authors should subclass TestCase for their own tests. Construction
+and deconstruction of the test's environment ('fixture') can be
+implemented by overriding the 'setUp' and 'tearDown' methods respectively.</p>
+<p>If it is necessary to override the <strong>init</strong> method, the base class
+<strong>init</strong> method must always be called. It is important that subclasses
+should not change the signature of their <strong>init</strong> method, since instances
+of the classes are instantiated automatically by parts of the framework
+in order to be run.</p>
+<p>When subclassing TestCase, you can set these attributes:
+* failureException: determines which exception will be raised when
+the instance's assertion methods fail; test methods raising this
+exception will be deemed to have 'failed' rather than 'errored'.
+* longMessage: determines whether long messages (including repr of
+objects used in assert methods) will be printed on failure in <em>addition</em>
+to any explicit message passed.
+* maxDiff: sets the maximum length of a diff in failure messages
+by assert methods using difflib. It is looked up as an instance
+attribute so can be configured by individual tests if required.</p>
+<p>Create an instance of the class that will use the named test
+method when executed. Raises a ValueError if the instance does
+not have a method with the specified name.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TestParallelizers(unittest.TestCase):
+    @staticmethod
+    def task(num_tasks_submitted: int):
+        num_tasks_submitted[0] += 1       
+
+
+    def test_blocking_thread_pooler(self):
+        num_tasks_submitted = [0]
+
+
+        def gen(num_tasks):
+            iterable = [
+                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
+            ]
+            yield from iterable
+
+
+        num_tasks = 1000
+        iterable = gen(num_tasks=num_tasks)
+
+        max_workers = 8
+        queue_size = 3
+        p = BlockingThreadPooler(max_workers=max_workers, queue_size=queue_size)        
+        for _ in p(iterable=iterable):
+            assert num_tasks_submitted[0] &lt;= queue_size
+            num_tasks_submitted[0] -= 1
+
+
+    def test_blocking_process_pooler(self):
+        num_tasks_submitted = [0]
+
+
+        def gen(num_tasks):
+            iterable = [
+                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
+            ]
+            yield from iterable
+
+
+        num_tasks = 1000
+        iterable = gen(num_tasks=num_tasks)
+
+        max_workers = 8
+        queue_size = 3
+        p = BlockingProcessPooler(max_workers=max_workers, queue_size=queue_size)        
+        for _ in p(iterable=iterable):
+            assert num_tasks_submitted[0] &lt;= queue_size
+            num_tasks_submitted[0] -= 1            
+        
+
+    def test_async_gatherer(self):
+        async def sleep(seconds: int, *args, **kwargs):
+            await asyncio.sleep(seconds)
+
+
+        num_tasks = 1000
+        seconds = 1
+        iterable = [
+            (sleep, seconds, list(), dict()) for _ in range(num_tasks)
+        ]
+        start = time.time()
+        list(AsyncGatherer()(iterable=iterable))
+        end = time.time()
+        self.assertLessEqual(end - start, 1.5 * seconds)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>unittest.case.TestCase</li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="light_pipe.parallelizer.TestParallelizers.task"><code class="name flex">
+<span>def <span class="ident">task</span></span>(<span>num_tasks_submitted: int)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def task(num_tasks_submitted: int):
+    num_tasks_submitted[0] += 1       </code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="light_pipe.parallelizer.TestParallelizers.test_async_gatherer"><code class="name flex">
+<span>def <span class="ident">test_async_gatherer</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def test_async_gatherer(self):
+    async def sleep(seconds: int, *args, **kwargs):
+        await asyncio.sleep(seconds)
+
+
+    num_tasks = 1000
+    seconds = 1
+    iterable = [
+        (sleep, seconds, list(), dict()) for _ in range(num_tasks)
+    ]
+    start = time.time()
+    list(AsyncGatherer()(iterable=iterable))
+    end = time.time()
+    self.assertLessEqual(end - start, 1.5 * seconds)</code></pre>
+</details>
+</dd>
+<dt id="light_pipe.parallelizer.TestParallelizers.test_blocking_process_pooler"><code class="name flex">
+<span>def <span class="ident">test_blocking_process_pooler</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def test_blocking_process_pooler(self):
+    num_tasks_submitted = [0]
+
+
+    def gen(num_tasks):
+        iterable = [
+            (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
+        ]
+        yield from iterable
+
+
+    num_tasks = 1000
+    iterable = gen(num_tasks=num_tasks)
+
+    max_workers = 8
+    queue_size = 3
+    p = BlockingProcessPooler(max_workers=max_workers, queue_size=queue_size)        
+    for _ in p(iterable=iterable):
+        assert num_tasks_submitted[0] &lt;= queue_size
+        num_tasks_submitted[0] -= 1            </code></pre>
+</details>
+</dd>
+<dt id="light_pipe.parallelizer.TestParallelizers.test_blocking_thread_pooler"><code class="name flex">
+<span>def <span class="ident">test_blocking_thread_pooler</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def test_blocking_thread_pooler(self):
+    num_tasks_submitted = [0]
+
+
+    def gen(num_tasks):
+        iterable = [
+            (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
+        ]
+        yield from iterable
+
+
+    num_tasks = 1000
+    iterable = gen(num_tasks=num_tasks)
+
+    max_workers = 8
+    queue_size = 3
+    p = BlockingThreadPooler(max_workers=max_workers, queue_size=queue_size)        
+    for _ in p(iterable=iterable):
+        assert num_tasks_submitted[0] &lt;= queue_size
+        num_tasks_submitted[0] -= 1</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
 <dt id="light_pipe.parallelizer.ThreadPooler"><code class="flex name class">
 <span>class <span class="ident">ThreadPooler</span></span>
 <span>(</span><span>*args, DefaultExecutor: Optional[type] = concurrent.futures.thread.ThreadPoolExecutor, **kwargs)</span>
@@ -661,6 +957,15 @@ class AsyncGatherer(Parallelizer):
 </li>
 <li>
 <h4><code><a title="light_pipe.parallelizer.ProcessPooler" href="#light_pipe.parallelizer.ProcessPooler">ProcessPooler</a></code></h4>
+</li>
+<li>
+<h4><code><a title="light_pipe.parallelizer.TestParallelizers" href="#light_pipe.parallelizer.TestParallelizers">TestParallelizers</a></code></h4>
+<ul class="">
+<li><code><a title="light_pipe.parallelizer.TestParallelizers.task" href="#light_pipe.parallelizer.TestParallelizers.task">task</a></code></li>
+<li><code><a title="light_pipe.parallelizer.TestParallelizers.test_async_gatherer" href="#light_pipe.parallelizer.TestParallelizers.test_async_gatherer">test_async_gatherer</a></code></li>
+<li><code><a title="light_pipe.parallelizer.TestParallelizers.test_blocking_process_pooler" href="#light_pipe.parallelizer.TestParallelizers.test_blocking_process_pooler">test_blocking_process_pooler</a></code></li>
+<li><code><a title="light_pipe.parallelizer.TestParallelizers.test_blocking_thread_pooler" href="#light_pipe.parallelizer.TestParallelizers.test_blocking_thread_pooler">test_blocking_thread_pooler</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="light_pipe.parallelizer.ThreadPooler" href="#light_pipe.parallelizer.ThreadPooler">ThreadPooler</a></code></h4>

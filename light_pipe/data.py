@@ -1,4 +1,4 @@
-__author__ = "Richard Correro (rcorrero@stanford.edu)"
+__author__ = "Richard Correro (rcorrero@gmail.com)"
 
 
 from typing import Callable, List, Optional
