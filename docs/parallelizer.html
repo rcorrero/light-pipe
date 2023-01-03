@@ -423,7 +423,7 @@ if __name__ == &#34;__main__&#34;:
 </dd>
 <dt id="light_pipe.parallelizer.BlockingPooler"><code class="flex name class">
 <span>class <span class="ident">BlockingPooler</span></span>
-<span>(</span><span>max_workers: Optional[int] = None, queue_size: Optional[int] = None, DefaultBlockingExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, ForwardRef(None)] = None)</span>
+<span>(</span><span>max_workers: Optional[int] = None, queue_size: Optional[int] = None, DefaultBlockingExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, None] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -596,7 +596,7 @@ if __name__ == &#34;__main__&#34;:
 </dd>
 <dt id="light_pipe.parallelizer.Pooler"><code class="flex name class">
 <span>class <span class="ident">Pooler</span></span>
-<span>(</span><span>max_workers: Optional[int] = None, DefaultExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, ForwardRef(None)] = None)</span>
+<span>(</span><span>max_workers: Optional[int] = None, DefaultExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, None] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>

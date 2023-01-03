@@ -289,7 +289,7 @@ class Transformer:
 <h3>Static methods</h3>
 <dl>
 <dt id="light_pipe.transformer.Transformer.fork"><code class="name flex">
-<span>def <span class="ident">fork</span></span>(<span>f: Callable, iterable: Iterable, *args, recurse: Optional[bool] = True, **kwargs) ‑> Generator</span>
+<span>def <span class="ident">fork</span></span>(<span>f: Callable, iterable: Iterable[+T_co], *args, recurse: Optional[bool] = True, **kwargs) ‑> Generator[+T_co, -T_contra, +V_co]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -314,7 +314,7 @@ def fork(
 </details>
 </dd>
 <dt id="light_pipe.transformer.Transformer.join"><code class="name flex">
-<span>def <span class="ident">join</span></span>(<span>iterable: Iterable, recurse: Optional[bool] = True) ‑> Generator</span>
+<span>def <span class="ident">join</span></span>(<span>iterable: Iterable[+T_co], recurse: Optional[bool] = True) ‑> Generator[+T_co, -T_contra, +V_co]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
