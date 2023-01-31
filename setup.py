@@ -9,7 +9,7 @@ setup(
     """,
     url="https://github.com/rcorrero/light-pipe",
     author="Richard Correro",
-    author_email="rcorrero@gmail.com",
+    author_email="richard@richardcorrero.com",
     license="BSD 3-Clause",
     packages=["light_pipe"]
 )

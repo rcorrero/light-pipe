@@ -1,4 +1,4 @@
-__author__ = "Richard Correro (rcorrero@gmail.com)"
+__author__ = "Richard Correro (richard@richardcorrero.com)"
 
 
 import functools
