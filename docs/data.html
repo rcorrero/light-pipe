@@ -29,16 +29,19 @@
 <pre><code class="python">__author__ = &#34;Richard Correro (richard@richardcorrero.com)&#34;
 
 
-from typing import Callable, List, Optional
+from typing import Callable, Iterable, List, Optional, Union
 
 
 class Data:
     def __init__(
-        self, generator: Optional[Callable] = None, 
+        self, generator: Optional[Union[Callable, Iterable]] = None, 
         store_results: Optional[bool] = False,
         _results_stored: Optional[bool] = False,
         *args, **kwargs
     ):
+        if isinstance(generator, Iterable):
+            generator = self._yield_results(results=generator)
+            _results_stored = True
         self.generator = generator
         self.store_results = store_results
         self._results_stored = _results_stored        
@@ -149,7 +152,7 @@ class Data:
 <dl>
 <dt id="light_pipe.data.Data"><code class="flex name class">
 <span>class <span class="ident">Data</span></span>
-<span>(</span><span>generator: Optional[Callable] = None, store_results: Optional[bool] = False, *args, **kwargs)</span>
+<span>(</span><span>generator: Union[Callable, Iterable[+T_co], None] = None, store_results: Optional[bool] = False, *args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -159,11 +162,14 @@ class Data:
 </summary>
 <pre><code class="python">class Data:
     def __init__(
-        self, generator: Optional[Callable] = None, 
+        self, generator: Optional[Union[Callable, Iterable]] = None, 
         store_results: Optional[bool] = False,
         _results_stored: Optional[bool] = False,
         *args, **kwargs
     ):
+        if isinstance(generator, Iterable):
+            generator = self._yield_results(results=generator)
+            _results_stored = True
         self.generator = generator
         self.store_results = store_results
         self._results_stored = _results_stored        
