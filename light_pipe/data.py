@@ -1,16 +1,19 @@
 __author__ = "Richard Correro (richard@richardcorrero.com)"
 
 
-from typing import Callable, List, Optional
+from typing import Callable, Iterable, List, Optional, Union
 
 
 class Data:
     def __init__(
-        self, generator: Optional[Callable] = None, 
+        self, generator: Optional[Union[Callable, Iterable]] = None, 
         store_results: Optional[bool] = False,
         _results_stored: Optional[bool] = False,
         *args, **kwargs
     ):
+        if isinstance(generator, Iterable):
+            generator = self._yield_results(results=generator)
+            _results_stored = True
         self.generator = generator
         self.store_results = store_results
         self._results_stored = _results_stored        
