@@ -18,6 +18,13 @@ Pipelines defined using Light-Pipe scale effortlessly, with native support for a
 
 Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
+## Installing Light-Pipe
+
+```
+pip install light-pipe
+
+```
+
 ## Basic Example
 
 ```
@@ -50,6 +57,7 @@ Third: 8
 >>>
 >>> print(data(block=True))
 [2, 5, 8]
+
 ```
 
 ## More Information

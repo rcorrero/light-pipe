@@ -28,6 +28,10 @@
 <p><a href="https://www.light-pipe.io/">Light-Pipe</a> makes data processing pipeline development quick and painless. It is an extensible, light-weight Python framework with zero non-standard dependencies for data pipelines that scale effortlessly. It abstracts away the implementation details of the pipeline itself, meaning that the developer only has to define the transformations performed within the pipeline on individual units of data.</p>
 <p>Pipelines defined using Light-Pipe scale effortlessly, with native support for all forms of concurrency, allowing for the mixing and matching of asynchronous, multi-threaded, and multi-process operations all within a single pipeline. It's also super fast and efficient, having been used to perform critical geospatial data processing tasks <a href="https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png">at least an order of magnitude faster than existing systems</a>.</p>
 <p>Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause License</a>.</p>
+<h2 id="installing-light-pipe">Installing Light-Pipe</h2>
+<pre><code>pip install light-pipe
+
+</code></pre>
 <h2 id="basic-example">Basic Example</h2>
 <pre><code>&gt;&gt;&gt; from light_pipe import make_data, make_transformer
 &gt;&gt;&gt; 
@@ -58,6 +62,7 @@ Third: 8
 &gt;&gt;&gt;
 &gt;&gt;&gt; print(data(block=True))
 [2, 5, 8]
+
 </code></pre>
 <h2 id="more-information">More Information</h2>
 <ul>
@@ -94,6 +99,13 @@ Pipelines defined using Light-Pipe scale effortlessly, with native support for a
 
 Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
+## Installing Light-Pipe
+
+```
+pip install light-pipe
+
+```
+
 ## Basic Example
 
 ```
@@ -126,6 +138,7 @@ Third: 8
 &gt;&gt;&gt;
 &gt;&gt;&gt; print(data(block=True))
 [2, 5, 8]
+
 ```
 
 ## More Information
@@ -170,6 +183,7 @@ Copyright 2020-2023 [Richard Correro](https://www.richardcorrero.com/).
 <ul>
 <li><a href="#light-pipe">Light-Pipe</a><ul>
 <li><a href="#overview">Overview</a></li>
+<li><a href="#installing-light-pipe">Installing Light-Pipe</a></li>
 <li><a href="#basic-example">Basic Example</a></li>
 <li><a href="#more-information">More Information</a></li>
 </ul>
