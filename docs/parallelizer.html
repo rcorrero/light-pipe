@@ -32,18 +32,23 @@
 import asyncio
 import concurrent.futures
 import functools
-import time
-import unittest
-from typing import (Any, AsyncGenerator, Callable, Coroutine, Generator,
+from concurrent.futures import Future
+from typing import (Any, AsyncGenerator, Callable, Coroutine, Dict, Generator,
                     Iterable, List, Optional, Tuple, Union)
 
 
 class Parallelizer:
     def __call__(
-        self, iterable: Iterable    
+        self, iterable: Iterable, tuple_to_args: Optional[bool] = True,
+        dict_to_kwargs: Optional[bool] = True
     ):
         for f, item, args, kwargs in iterable:
-            yield f(item, *args, **kwargs)
+            if tuple_to_args and isinstance(item, Tuple):
+                yield f(*item, *args, **kwargs)
+            elif dict_to_kwargs and isinstance(item, Dict):
+                yield f(*args, **item, **kwargs)
+            else:
+                yield f(item, *args, **kwargs)
 
 
 class Pooler(Parallelizer):
@@ -68,7 +73,9 @@ class Pooler(Parallelizer):
         executor: Optional[Union[
             concurrent.futures.ThreadPoolExecutor, 
             concurrent.futures.ProcessPoolExecutor
-        ]] = None
+        ]] = None, 
+        tuple_to_args: Optional[bool] = True,
+        dict_to_kwargs: Optional[bool] = True
     ) -&gt; Generator:
         if executor is None:
             executor = self.executor
@@ -76,20 +83,47 @@ class Pooler(Parallelizer):
             max_workers = self.max_workers
 
         if executor is not None:
-            futures = [
-                executor.submit(f, item, *args, **kwargs) for 
-                f, item, args, kwargs in iterable
-            ]
-            for future in concurrent.futures.as_completed(futures):
-                yield future.result()
+            # futures = [
+            #     executor.submit(f, item, *args, **kwargs) for 
+            #     f, item, args, kwargs in iterable
+            # ]
+            yield from self._submit_tasks(
+                iterable=iterable, executor=executor, tuple_to_args=tuple_to_args, 
+                dict_to_kwargs=dict_to_kwargs
+            )
         else:
             with self.DefaultExecutor(max_workers=max_workers) as executor:
-                futures = [
-                    executor.submit(f, item, *args, **kwargs) for 
-                    f, item, args, kwargs in iterable
-                ]
-                for future in concurrent.futures.as_completed(futures):
-                    yield future.result()   
+                # futures = [
+                #     executor.submit(f, item, *args, **kwargs) for 
+                #     f, item, args, kwargs in iterable
+                # ]
+                # for future in concurrent.futures.as_completed(futures):
+                #     yield future.result()
+                yield from self._submit_tasks(
+                    iterable=iterable, executor=executor, 
+                    tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
+                )
+
+
+    def _submit_tasks(
+        self, iterable: Iterable, 
+        executor: Union[
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
+        ],
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True
+    ) -&gt; Generator:
+        futures: list = list()
+        for f, item, args, kwargs in iterable:
+            if tuple_to_args and isinstance(item, Tuple):
+                futures.append(executor.submit(f, *item, *args, **kwargs))
+            elif dict_to_kwargs and isinstance(item, Dict):
+                futures.append(executor.submit(f, *args, **item, **kwargs))
+            else:
+                futures.append(executor.submit(f, item, *args, **kwargs))
+        for future in concurrent.futures.as_completed(futures):
+            yield future.result()
 
 
 class ThreadPooler(Pooler):
@@ -128,12 +162,32 @@ class BlockingPooler(Parallelizer):
         self.executor = executor
 
 
+    def _submit_task(
+        self, f: Callable, item: Any,
+        executor: Union[
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
+        ],
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
+        *args, **kwargs
+    ) -&gt; Future:
+        if tuple_to_args and isinstance(item, Tuple):
+            return executor.submit(f, *item, *args, **kwargs)
+        elif dict_to_kwargs and isinstance(item, Dict):
+            return executor.submit(f, *args, **item, **kwargs)
+        else:
+            return executor.submit(f, item, *args, **kwargs)
+
+
     def _blocking_submitter(
         self,  iterable: Iterable, queue_size: int,
         executor: Optional[Union[
             concurrent.futures.ThreadPoolExecutor, 
             concurrent.futures.ProcessPoolExecutor
         ]] = None,
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
     ) -&gt; Generator:
         futures = dict()
         exhausted = False
@@ -145,7 +199,13 @@ class BlockingPooler(Parallelizer):
                 except StopIteration:
                     exhausted = True
                     break
-                futures[executor.submit(f, item, *args, **kwargs)] = &#34;Done&#34;
+                # futures[executor.submit(f, item, *args, **kwargs)] = &#34;Done&#34;
+                futures[
+                    self._submit_task(
+                        f=f, item=item, executor=executor, tuple_to_args=tuple_to_args, 
+                        dict_to_kwargs=dict_to_kwargs, *args, **kwargs
+                    )
+                ] = &#34;Done&#34;
                 num_submitted += 1
             if futures: # There&#39;s at least one task left to await
                 done, _ = concurrent.futures.wait(
@@ -167,7 +227,9 @@ class BlockingPooler(Parallelizer):
         executor: Optional[Union[
             concurrent.futures.ThreadPoolExecutor, 
             concurrent.futures.ProcessPoolExecutor
-        ]] = None
+        ]] = None,
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
     ) -&gt; Generator:
         if max_workers is None:
             max_workers = self.max_workers
@@ -178,14 +240,16 @@ class BlockingPooler(Parallelizer):
 
         if executor is not None:
             yield from self._blocking_submitter(
-                iterable=iterable, queue_size=queue_size, executor=executor
+                iterable=iterable, queue_size=queue_size, executor=executor,
+                tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
             )
         else:
             with self.DefaultBlockingExecutor(
                 max_workers=max_workers,
             ) as executor:
                 yield from self._blocking_submitter(
-                    iterable=iterable, queue_size=queue_size, executor=executor
+                    iterable=iterable, queue_size=queue_size, executor=executor,
+                    tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
                 )
 
 
@@ -223,12 +287,18 @@ class AsyncGatherer(Parallelizer):
 
 
     def _get_tasks(
-        self, iterable: Iterable, **kwargs
+        self, iterable: Iterable, tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True, **kwargs
     ) -&gt; List[asyncio.Task]:
         tasks = list()
         for f, item, args, wkwargs in iterable:
             f = self._make_async_decorator(f)
-            tasks.append(f(item, *args, **kwargs, **wkwargs))
+            if tuple_to_args and isinstance(item, Tuple):
+                tasks.append(f(*item, *args, **kwargs, **wkwargs))
+            elif dict_to_kwargs and isinstance(item, Dict):
+                tasks.append(f(*args, **item, **kwargs, **wkwargs))
+            else:
+                tasks.append(f(item, *args, **kwargs, **wkwargs))
         return tasks
             
 
@@ -262,82 +332,16 @@ class AsyncGatherer(Parallelizer):
 
     def __call__(
         self, iterable: Iterable,
-        loop: Optional[asyncio.AbstractEventLoop] = None, 
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
     ) -&gt; Generator:
         if loop is None:
             loop = asyncio.get_event_loop()
-        async_generator = self._async_gen(iterable)
-        yield from self._iter(loop, async_generator)
-
-
-class TestParallelizers(unittest.TestCase):
-    @staticmethod
-    def task(num_tasks_submitted: int):
-        num_tasks_submitted[0] += 1       
-
-
-    def test_blocking_thread_pooler(self):
-        num_tasks_submitted = [0]
-
-
-        def gen(num_tasks):
-            iterable = [
-                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
-            ]
-            yield from iterable
-
-
-        num_tasks = 1000
-        iterable = gen(num_tasks=num_tasks)
-
-        max_workers = 8
-        queue_size = 3
-        p = BlockingThreadPooler(max_workers=max_workers, queue_size=queue_size)        
-        for _ in p(iterable=iterable):
-            assert num_tasks_submitted[0] &lt;= queue_size
-            num_tasks_submitted[0] -= 1
-
-
-    def test_blocking_process_pooler(self):
-        num_tasks_submitted = [0]
-
-
-        def gen(num_tasks):
-            iterable = [
-                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
-            ]
-            yield from iterable
-
-
-        num_tasks = 1000
-        iterable = gen(num_tasks=num_tasks)
-
-        max_workers = 8
-        queue_size = 3
-        p = BlockingProcessPooler(max_workers=max_workers, queue_size=queue_size)        
-        for _ in p(iterable=iterable):
-            assert num_tasks_submitted[0] &lt;= queue_size
-            num_tasks_submitted[0] -= 1            
-        
-
-    def test_async_gatherer(self):
-        async def sleep(seconds: int, *args, **kwargs):
-            await asyncio.sleep(seconds)
-
-
-        num_tasks = 1000
-        seconds = 1
-        iterable = [
-            (sleep, seconds, list(), dict()) for _ in range(num_tasks)
-        ]
-        start = time.time()
-        list(AsyncGatherer()(iterable=iterable))
-        end = time.time()
-        self.assertLessEqual(end - start, 1.5 * seconds)
-
-
-if __name__ == &#34;__main__&#34;:
-    unittest.main()</code></pre>
+        async_generator = self._async_gen(
+            iterable, tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
+        )
+        yield from self._iter(loop, async_generator)</code></pre>
 </details>
 </section>
 <section>
@@ -370,12 +374,18 @@ if __name__ == &#34;__main__&#34;:
 
 
     def _get_tasks(
-        self, iterable: Iterable, **kwargs
+        self, iterable: Iterable, tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True, **kwargs
     ) -&gt; List[asyncio.Task]:
         tasks = list()
         for f, item, args, wkwargs in iterable:
             f = self._make_async_decorator(f)
-            tasks.append(f(item, *args, **kwargs, **wkwargs))
+            if tuple_to_args and isinstance(item, Tuple):
+                tasks.append(f(*item, *args, **kwargs, **wkwargs))
+            elif dict_to_kwargs and isinstance(item, Dict):
+                tasks.append(f(*args, **item, **kwargs, **wkwargs))
+            else:
+                tasks.append(f(item, *args, **kwargs, **wkwargs))
         return tasks
             
 
@@ -409,11 +419,15 @@ if __name__ == &#34;__main__&#34;:
 
     def __call__(
         self, iterable: Iterable,
-        loop: Optional[asyncio.AbstractEventLoop] = None, 
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
     ) -&gt; Generator:
         if loop is None:
             loop = asyncio.get_event_loop()
-        async_generator = self._async_gen(iterable)
+        async_generator = self._async_gen(
+            iterable, tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
+        )
         yield from self._iter(loop, async_generator)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -423,7 +437,7 @@ if __name__ == &#34;__main__&#34;:
 </dd>
 <dt id="light_pipe.parallelizer.BlockingPooler"><code class="flex name class">
 <span>class <span class="ident">BlockingPooler</span></span>
-<span>(</span><span>max_workers: Optional[int] = None, queue_size: Optional[int] = None, DefaultBlockingExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, None] = None)</span>
+<span>(</span><span>max_workers: Optional[int] = None, queue_size: Optional[int] = None, DefaultBlockingExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, ForwardRef(None)] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -449,12 +463,32 @@ if __name__ == &#34;__main__&#34;:
         self.executor = executor
 
 
+    def _submit_task(
+        self, f: Callable, item: Any,
+        executor: Union[
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
+        ],
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
+        *args, **kwargs
+    ) -&gt; Future:
+        if tuple_to_args and isinstance(item, Tuple):
+            return executor.submit(f, *item, *args, **kwargs)
+        elif dict_to_kwargs and isinstance(item, Dict):
+            return executor.submit(f, *args, **item, **kwargs)
+        else:
+            return executor.submit(f, item, *args, **kwargs)
+
+
     def _blocking_submitter(
         self,  iterable: Iterable, queue_size: int,
         executor: Optional[Union[
             concurrent.futures.ThreadPoolExecutor, 
             concurrent.futures.ProcessPoolExecutor
         ]] = None,
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
     ) -&gt; Generator:
         futures = dict()
         exhausted = False
@@ -466,7 +500,13 @@ if __name__ == &#34;__main__&#34;:
                 except StopIteration:
                     exhausted = True
                     break
-                futures[executor.submit(f, item, *args, **kwargs)] = &#34;Done&#34;
+                # futures[executor.submit(f, item, *args, **kwargs)] = &#34;Done&#34;
+                futures[
+                    self._submit_task(
+                        f=f, item=item, executor=executor, tuple_to_args=tuple_to_args, 
+                        dict_to_kwargs=dict_to_kwargs, *args, **kwargs
+                    )
+                ] = &#34;Done&#34;
                 num_submitted += 1
             if futures: # There&#39;s at least one task left to await
                 done, _ = concurrent.futures.wait(
@@ -488,7 +528,9 @@ if __name__ == &#34;__main__&#34;:
         executor: Optional[Union[
             concurrent.futures.ThreadPoolExecutor, 
             concurrent.futures.ProcessPoolExecutor
-        ]] = None
+        ]] = None,
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True,
     ) -&gt; Generator:
         if max_workers is None:
             max_workers = self.max_workers
@@ -499,14 +541,16 @@ if __name__ == &#34;__main__&#34;:
 
         if executor is not None:
             yield from self._blocking_submitter(
-                iterable=iterable, queue_size=queue_size, executor=executor
+                iterable=iterable, queue_size=queue_size, executor=executor,
+                tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
             )
         else:
             with self.DefaultBlockingExecutor(
                 max_workers=max_workers,
             ) as executor:
                 yield from self._blocking_submitter(
-                    iterable=iterable, queue_size=queue_size, executor=executor
+                    iterable=iterable, queue_size=queue_size, executor=executor,
+                    tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
                 )</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -582,10 +626,16 @@ if __name__ == &#34;__main__&#34;:
 </summary>
 <pre><code class="python">class Parallelizer:
     def __call__(
-        self, iterable: Iterable    
+        self, iterable: Iterable, tuple_to_args: Optional[bool] = True,
+        dict_to_kwargs: Optional[bool] = True
     ):
         for f, item, args, kwargs in iterable:
-            yield f(item, *args, **kwargs)</code></pre>
+            if tuple_to_args and isinstance(item, Tuple):
+                yield f(*item, *args, **kwargs)
+            elif dict_to_kwargs and isinstance(item, Dict):
+                yield f(*args, **item, **kwargs)
+            else:
+                yield f(item, *args, **kwargs)</code></pre>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">
@@ -596,7 +646,7 @@ if __name__ == &#34;__main__&#34;:
 </dd>
 <dt id="light_pipe.parallelizer.Pooler"><code class="flex name class">
 <span>class <span class="ident">Pooler</span></span>
-<span>(</span><span>max_workers: Optional[int] = None, DefaultExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, None] = None)</span>
+<span>(</span><span>max_workers: Optional[int] = None, DefaultExecutor: Optional[type] = None, executor: Union[concurrent.futures.thread.ThreadPoolExecutor, concurrent.futures.process.ProcessPoolExecutor, ForwardRef(None)] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -626,7 +676,9 @@ if __name__ == &#34;__main__&#34;:
         executor: Optional[Union[
             concurrent.futures.ThreadPoolExecutor, 
             concurrent.futures.ProcessPoolExecutor
-        ]] = None
+        ]] = None, 
+        tuple_to_args: Optional[bool] = True,
+        dict_to_kwargs: Optional[bool] = True
     ) -&gt; Generator:
         if executor is None:
             executor = self.executor
@@ -634,20 +686,47 @@ if __name__ == &#34;__main__&#34;:
             max_workers = self.max_workers
 
         if executor is not None:
-            futures = [
-                executor.submit(f, item, *args, **kwargs) for 
-                f, item, args, kwargs in iterable
-            ]
-            for future in concurrent.futures.as_completed(futures):
-                yield future.result()
+            # futures = [
+            #     executor.submit(f, item, *args, **kwargs) for 
+            #     f, item, args, kwargs in iterable
+            # ]
+            yield from self._submit_tasks(
+                iterable=iterable, executor=executor, tuple_to_args=tuple_to_args, 
+                dict_to_kwargs=dict_to_kwargs
+            )
         else:
             with self.DefaultExecutor(max_workers=max_workers) as executor:
-                futures = [
-                    executor.submit(f, item, *args, **kwargs) for 
-                    f, item, args, kwargs in iterable
-                ]
-                for future in concurrent.futures.as_completed(futures):
-                    yield future.result()   </code></pre>
+                # futures = [
+                #     executor.submit(f, item, *args, **kwargs) for 
+                #     f, item, args, kwargs in iterable
+                # ]
+                # for future in concurrent.futures.as_completed(futures):
+                #     yield future.result()
+                yield from self._submit_tasks(
+                    iterable=iterable, executor=executor, 
+                    tuple_to_args=tuple_to_args, dict_to_kwargs=dict_to_kwargs
+                )
+
+
+    def _submit_tasks(
+        self, iterable: Iterable, 
+        executor: Union[
+            concurrent.futures.ThreadPoolExecutor, 
+            concurrent.futures.ProcessPoolExecutor
+        ],
+        tuple_to_args: Optional[bool] = True, 
+        dict_to_kwargs: Optional[bool] = True
+    ) -&gt; Generator:
+        futures: list = list()
+        for f, item, args, kwargs in iterable:
+            if tuple_to_args and isinstance(item, Tuple):
+                futures.append(executor.submit(f, *item, *args, **kwargs))
+            elif dict_to_kwargs and isinstance(item, Dict):
+                futures.append(executor.submit(f, *args, **item, **kwargs))
+            else:
+                futures.append(executor.submit(f, item, *args, **kwargs))
+        for future in concurrent.futures.as_completed(futures):
+            yield future.result()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -682,220 +761,6 @@ if __name__ == &#34;__main__&#34;:
 <li><a title="light_pipe.parallelizer.Pooler" href="#light_pipe.parallelizer.Pooler">Pooler</a></li>
 <li><a title="light_pipe.parallelizer.Parallelizer" href="#light_pipe.parallelizer.Parallelizer">Parallelizer</a></li>
 </ul>
-</dd>
-<dt id="light_pipe.parallelizer.TestParallelizers"><code class="flex name class">
-<span>class <span class="ident">TestParallelizers</span></span>
-<span>(</span><span>methodName='runTest')</span>
-</code></dt>
-<dd>
-<div class="desc"><p>A class whose instances are single test cases.</p>
-<p>By default, the test code itself should be placed in a method named
-'runTest'.</p>
-<p>If the fixture may be used for many test cases, create as
-many test methods as are needed. When instantiating such a TestCase
-subclass, specify in the constructor arguments the name of the test method
-that the instance is to execute.</p>
-<p>Test authors should subclass TestCase for their own tests. Construction
-and deconstruction of the test's environment ('fixture') can be
-implemented by overriding the 'setUp' and 'tearDown' methods respectively.</p>
-<p>If it is necessary to override the <strong>init</strong> method, the base class
-<strong>init</strong> method must always be called. It is important that subclasses
-should not change the signature of their <strong>init</strong> method, since instances
-of the classes are instantiated automatically by parts of the framework
-in order to be run.</p>
-<p>When subclassing TestCase, you can set these attributes:
-* failureException: determines which exception will be raised when
-the instance's assertion methods fail; test methods raising this
-exception will be deemed to have 'failed' rather than 'errored'.
-* longMessage: determines whether long messages (including repr of
-objects used in assert methods) will be printed on failure in <em>addition</em>
-to any explicit message passed.
-* maxDiff: sets the maximum length of a diff in failure messages
-by assert methods using difflib. It is looked up as an instance
-attribute so can be configured by individual tests if required.</p>
-<p>Create an instance of the class that will use the named test
-method when executed. Raises a ValueError if the instance does
-not have a method with the specified name.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class TestParallelizers(unittest.TestCase):
-    @staticmethod
-    def task(num_tasks_submitted: int):
-        num_tasks_submitted[0] += 1       
-
-
-    def test_blocking_thread_pooler(self):
-        num_tasks_submitted = [0]
-
-
-        def gen(num_tasks):
-            iterable = [
-                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
-            ]
-            yield from iterable
-
-
-        num_tasks = 1000
-        iterable = gen(num_tasks=num_tasks)
-
-        max_workers = 8
-        queue_size = 3
-        p = BlockingThreadPooler(max_workers=max_workers, queue_size=queue_size)        
-        for _ in p(iterable=iterable):
-            assert num_tasks_submitted[0] &lt;= queue_size
-            num_tasks_submitted[0] -= 1
-
-
-    def test_blocking_process_pooler(self):
-        num_tasks_submitted = [0]
-
-
-        def gen(num_tasks):
-            iterable = [
-                (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
-            ]
-            yield from iterable
-
-
-        num_tasks = 1000
-        iterable = gen(num_tasks=num_tasks)
-
-        max_workers = 8
-        queue_size = 3
-        p = BlockingProcessPooler(max_workers=max_workers, queue_size=queue_size)        
-        for _ in p(iterable=iterable):
-            assert num_tasks_submitted[0] &lt;= queue_size
-            num_tasks_submitted[0] -= 1            
-        
-
-    def test_async_gatherer(self):
-        async def sleep(seconds: int, *args, **kwargs):
-            await asyncio.sleep(seconds)
-
-
-        num_tasks = 1000
-        seconds = 1
-        iterable = [
-            (sleep, seconds, list(), dict()) for _ in range(num_tasks)
-        ]
-        start = time.time()
-        list(AsyncGatherer()(iterable=iterable))
-        end = time.time()
-        self.assertLessEqual(end - start, 1.5 * seconds)</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>unittest.case.TestCase</li>
-</ul>
-<h3>Static methods</h3>
-<dl>
-<dt id="light_pipe.parallelizer.TestParallelizers.task"><code class="name flex">
-<span>def <span class="ident">task</span></span>(<span>num_tasks_submitted: int)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@staticmethod
-def task(num_tasks_submitted: int):
-    num_tasks_submitted[0] += 1       </code></pre>
-</details>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="light_pipe.parallelizer.TestParallelizers.test_async_gatherer"><code class="name flex">
-<span>def <span class="ident">test_async_gatherer</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def test_async_gatherer(self):
-    async def sleep(seconds: int, *args, **kwargs):
-        await asyncio.sleep(seconds)
-
-
-    num_tasks = 1000
-    seconds = 1
-    iterable = [
-        (sleep, seconds, list(), dict()) for _ in range(num_tasks)
-    ]
-    start = time.time()
-    list(AsyncGatherer()(iterable=iterable))
-    end = time.time()
-    self.assertLessEqual(end - start, 1.5 * seconds)</code></pre>
-</details>
-</dd>
-<dt id="light_pipe.parallelizer.TestParallelizers.test_blocking_process_pooler"><code class="name flex">
-<span>def <span class="ident">test_blocking_process_pooler</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def test_blocking_process_pooler(self):
-    num_tasks_submitted = [0]
-
-
-    def gen(num_tasks):
-        iterable = [
-            (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
-        ]
-        yield from iterable
-
-
-    num_tasks = 1000
-    iterable = gen(num_tasks=num_tasks)
-
-    max_workers = 8
-    queue_size = 3
-    p = BlockingProcessPooler(max_workers=max_workers, queue_size=queue_size)        
-    for _ in p(iterable=iterable):
-        assert num_tasks_submitted[0] &lt;= queue_size
-        num_tasks_submitted[0] -= 1            </code></pre>
-</details>
-</dd>
-<dt id="light_pipe.parallelizer.TestParallelizers.test_blocking_thread_pooler"><code class="name flex">
-<span>def <span class="ident">test_blocking_thread_pooler</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def test_blocking_thread_pooler(self):
-    num_tasks_submitted = [0]
-
-
-    def gen(num_tasks):
-        iterable = [
-            (self.task, num_tasks_submitted, list(), dict()) for _ in range(num_tasks)
-        ]
-        yield from iterable
-
-
-    num_tasks = 1000
-    iterable = gen(num_tasks=num_tasks)
-
-    max_workers = 8
-    queue_size = 3
-    p = BlockingThreadPooler(max_workers=max_workers, queue_size=queue_size)        
-    for _ in p(iterable=iterable):
-        assert num_tasks_submitted[0] &lt;= queue_size
-        num_tasks_submitted[0] -= 1</code></pre>
-</details>
-</dd>
-</dl>
 </dd>
 <dt id="light_pipe.parallelizer.ThreadPooler"><code class="flex name class">
 <span>class <span class="ident">ThreadPooler</span></span>
@@ -957,15 +822,6 @@ def task(num_tasks_submitted: int):
 </li>
 <li>
 <h4><code><a title="light_pipe.parallelizer.ProcessPooler" href="#light_pipe.parallelizer.ProcessPooler">ProcessPooler</a></code></h4>
-</li>
-<li>
-<h4><code><a title="light_pipe.parallelizer.TestParallelizers" href="#light_pipe.parallelizer.TestParallelizers">TestParallelizers</a></code></h4>
-<ul class="">
-<li><code><a title="light_pipe.parallelizer.TestParallelizers.task" href="#light_pipe.parallelizer.TestParallelizers.task">task</a></code></li>
-<li><code><a title="light_pipe.parallelizer.TestParallelizers.test_async_gatherer" href="#light_pipe.parallelizer.TestParallelizers.test_async_gatherer">test_async_gatherer</a></code></li>
-<li><code><a title="light_pipe.parallelizer.TestParallelizers.test_blocking_process_pooler" href="#light_pipe.parallelizer.TestParallelizers.test_blocking_process_pooler">test_blocking_process_pooler</a></code></li>
-<li><code><a title="light_pipe.parallelizer.TestParallelizers.test_blocking_thread_pooler" href="#light_pipe.parallelizer.TestParallelizers.test_blocking_thread_pooler">test_blocking_thread_pooler</a></code></li>
-</ul>
 </li>
 <li>
 <h4><code><a title="light_pipe.parallelizer.ThreadPooler" href="#light_pipe.parallelizer.ThreadPooler">ThreadPooler</a></code></h4>

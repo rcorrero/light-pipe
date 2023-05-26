@@ -4,7 +4,8 @@ __author__ = "Richard Correro (richard@richardcorrero.com)"
 import functools
 from typing import Callable, Generator, Iterable, Iterator, Optional
 
-from light_pipe import data, parallelizer
+from .data import Data
+from .parallelizer import Parallelizer
 
 
 class Transformer:
@@ -14,7 +15,7 @@ class Transformer:
     def __init__(
         self, transform_item: Optional[Callable] = None,
         join_fn: Optional[Callable] = None,
-        parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer(),
+        parallelizer: Optional[Parallelizer] = Parallelizer(),
         *args, **kwargs
     ):
         if transform_item is not None:
@@ -32,7 +33,7 @@ class Transformer:
     ) -> Generator:
         if recurse:
             for item in iterable:
-                if isinstance(item, data.Data) or isinstance(item, Iterator):
+                if isinstance(item, Data) or isinstance(item, Iterator):
                     yield from cls.fork(f, item, *args, recurse=recurse, **kwargs)
                 else:
                     yield f, item, args, kwargs
@@ -45,7 +46,7 @@ class Transformer:
     def join(cls, iterable: Iterable, recurse: Optional[bool] = True) -> Generator:
         for item in iterable:
             if recurse and (
-                isinstance(item, data.Data) or isinstance(item, Iterator)
+                isinstance(item, Data) or isinstance(item, Iterator)
             ):
                 yield from cls.join(item, recurse=recurse)
             else:
@@ -55,8 +56,10 @@ class Transformer:
     @staticmethod
     def transform_item(*args, **kwargs):
         raise NotImplementedError(
-            f"Either pass a `Callable` instance to __init__() or overwrite this \
-                method in a subclass of {Transformer.__name__}."
+            (
+                f"Either pass a `Callable` instance to __init__() or overwrite this "
+                f"method in a subclass of {Transformer.__name__}."
+            )
         )
 
 
@@ -82,9 +85,9 @@ class Transformer:
 
 
     def transform(
-        self, data: data.Data, *args, return_copy: Optional[bool] = True,
+        self, data: Data, *args, return_copy: Optional[bool] = True,
         block: Optional[bool] = False, **kwargs
-    ) -> data.Data:
+    ) -> Data:
         decorator = self._make_decorator(*args, *self.args, **kwargs, **self.kwargs)
         if return_copy:
             data = data.copy(*args, **kwargs)
@@ -95,15 +98,15 @@ class Transformer:
         return data
 
 
-    def __call__(self, data: data.Data, *args, **kwargs):
+    def __call__(self, data: Data, *args, **kwargs):
         return self.transform(data, *args, **kwargs)
 
 
-    def __ror__(self, data: data.Data):
+    def __ror__(self, data: Data):
         return self(data, return_copy=True)
 
 
-    def __rlshift__(self, data: data.Data):
+    def __rlshift__(self, data: Data):
         """
         The left-shift operator is overloaded for symmetry with the right-shift
         operator overloading. Currently 
@@ -119,6 +122,13 @@ class Transformer:
         return self(data, return_copy=True)        
 
 
-    def __rrshift__(self, data: data.Data):
-        return self(data, return_copy=False) 
+    def __rrshift__(self, data: Data):
+        return self(data, return_copy=False)
     
+
+def make_transformer(
+    transform_item: Optional[Callable] = None
+) -> Callable:
+    def transformer_wrapper(*args, **kwargs) -> Transformer:
+        return Transformer(transform_item=transform_item, *args, **kwargs)
+    return transformer_wrapper

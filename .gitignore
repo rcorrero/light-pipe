@@ -1,5 +1,6 @@
 __pycache__/
 .mypy*/
+env*/
 order/
 samples/
 
@@ -8,4 +9,5 @@ build/
 dist/
 
 *big_*
-_*
+_test*
+ex*

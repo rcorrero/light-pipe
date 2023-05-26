@@ -138,7 +138,14 @@ class Data:
         return self._copy(
            *args, generator=generator, store_results=store_results, 
            _results_stored=_results_stored, **kwargs
-        )        </code></pre>
+        )
+
+def make_data(
+    generator: Optional[Union[Callable, Iterable]] = None
+) -&gt; Callable:
+    def data_wrapper(*args, **kwargs) -&gt; Data:
+        return Data(generator=generator, *args, **kwargs)
+    return data_wrapper</code></pre>
 </details>
 </section>
 <section>
@@ -146,13 +153,33 @@ class Data:
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="light_pipe.data.make_data"><code class="name flex">
+<span>def <span class="ident">make_data</span></span>(<span>generator: Union[Callable, Iterable, ForwardRef(None)] = None) ‑> Callable</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_data(
+    generator: Optional[Union[Callable, Iterable]] = None
+) -&gt; Callable:
+    def data_wrapper(*args, **kwargs) -&gt; Data:
+        return Data(generator=generator, *args, **kwargs)
+    return data_wrapper</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
 <dt id="light_pipe.data.Data"><code class="flex name class">
 <span>class <span class="ident">Data</span></span>
-<span>(</span><span>generator: Union[Callable, Iterable[+T_co], None] = None, store_results: Optional[bool] = False, *args, **kwargs)</span>
+<span>(</span><span>generator: Union[Callable, Iterable, ForwardRef(None)] = None, store_results: Optional[bool] = False, *args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -266,7 +293,7 @@ class Data:
         return self._copy(
            *args, generator=generator, store_results=store_results, 
            _results_stored=_results_stored, **kwargs
-        )        </code></pre>
+        )</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -315,7 +342,7 @@ class Data:
     return self._copy(
        *args, generator=generator, store_results=store_results, 
        _results_stored=_results_stored, **kwargs
-    )        </code></pre>
+    )</code></pre>
 </details>
 </dd>
 <dt id="light_pipe.data.Data.generate"><code class="name flex">
@@ -369,6 +396,11 @@ class Data:
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="light_pipe" href="index.html">light_pipe</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="light_pipe.data.make_data" href="#light_pipe.data.make_data">make_data</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>

@@ -1,7 +1,11 @@
 SRCNAME=light_pipe
+TESTDIR=tests
 
 ### Run unit tests ###
-python3 -m unittest ${SRCNAME} -v
+python3 -m unittest discover ${TESTDIR} -v
+
+### Update pip ###
+python3 -m pip install --upgrade pip
 
 ### Make docs ###
 python3 -m pip install --upgrade pdoc3

@@ -2,10 +2,14 @@ from setuptools import setup
 
 
 setup(
-    name="Light-Pipe",
-    version="0.2.2",
+    name="light-pipe",
+    version="0.3.0",
     long_description="""
-    Light-Pipe is an extensible, light-weight Python framework for data pipelines that scale. It provides a set of intuitive abstractions designed to decouple pipeline implementation from the operations performed within the pipeline. It is designed to scale effortlessly, being built from the ground-up to support concurrency in all its forms, and it has zero non-standard dependencies. Light-Pipe is released under a BSD-3-Clause License.
+        Light-Pipe makes data processing pipeline development quick and painless. It is an extensible, light-weight Python framework for data pipelines that scale effortlessly, with zero non-standard dependencies. It abstracts away the implementation details of the pipeline itself, meaning that the developer only has to define the transformations performed within the pipeline on individual units of data.
+
+        Pipelines defined using Light-Pipe scale effortlessly, with native support for all forms of concurrency, allowing for the mixing and matching of asynchronous, multi-threaded, and multi-process operations all within a single pipeline. It's also super fast and efficient, having been used to perform critical geospatial data processing tasks at least an order of magnitude faster than existing systems.
+
+        Light-Pipe is released under a BSD-3-Clause License.
     """,
     url="https://github.com/rcorrero/light-pipe",
     author="Richard Correro",

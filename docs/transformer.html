@@ -32,7 +32,8 @@
 import functools
 from typing import Callable, Generator, Iterable, Iterator, Optional
 
-from light_pipe import data, parallelizer
+from .data import Data
+from .parallelizer import Parallelizer
 
 
 class Transformer:
@@ -42,7 +43,7 @@ class Transformer:
     def __init__(
         self, transform_item: Optional[Callable] = None,
         join_fn: Optional[Callable] = None,
-        parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer(),
+        parallelizer: Optional[Parallelizer] = Parallelizer(),
         *args, **kwargs
     ):
         if transform_item is not None:
@@ -60,7 +61,7 @@ class Transformer:
     ) -&gt; Generator:
         if recurse:
             for item in iterable:
-                if isinstance(item, data.Data) or isinstance(item, Iterator):
+                if isinstance(item, Data) or isinstance(item, Iterator):
                     yield from cls.fork(f, item, *args, recurse=recurse, **kwargs)
                 else:
                     yield f, item, args, kwargs
@@ -73,7 +74,7 @@ class Transformer:
     def join(cls, iterable: Iterable, recurse: Optional[bool] = True) -&gt; Generator:
         for item in iterable:
             if recurse and (
-                isinstance(item, data.Data) or isinstance(item, Iterator)
+                isinstance(item, Data) or isinstance(item, Iterator)
             ):
                 yield from cls.join(item, recurse=recurse)
             else:
@@ -83,8 +84,10 @@ class Transformer:
     @staticmethod
     def transform_item(*args, **kwargs):
         raise NotImplementedError(
-            f&#34;Either pass a `Callable` instance to __init__() or overwrite this \
-                method in a subclass of {Transformer.__name__}.&#34;
+            (
+                f&#34;Either pass a `Callable` instance to __init__() or overwrite this &#34;
+                f&#34;method in a subclass of {Transformer.__name__}.&#34;
+            )
         )
 
 
@@ -110,9 +113,9 @@ class Transformer:
 
 
     def transform(
-        self, data: data.Data, *args, return_copy: Optional[bool] = True,
+        self, data: Data, *args, return_copy: Optional[bool] = True,
         block: Optional[bool] = False, **kwargs
-    ) -&gt; data.Data:
+    ) -&gt; Data:
         decorator = self._make_decorator(*args, *self.args, **kwargs, **self.kwargs)
         if return_copy:
             data = data.copy(*args, **kwargs)
@@ -123,15 +126,15 @@ class Transformer:
         return data
 
 
-    def __call__(self, data: data.Data, *args, **kwargs):
+    def __call__(self, data: Data, *args, **kwargs):
         return self.transform(data, *args, **kwargs)
 
 
-    def __ror__(self, data: data.Data):
+    def __ror__(self, data: Data):
         return self(data, return_copy=True)
 
 
-    def __rlshift__(self, data: data.Data):
+    def __rlshift__(self, data: Data):
         &#34;&#34;&#34;
         The left-shift operator is overloaded for symmetry with the right-shift
         operator overloading. Currently 
@@ -147,9 +150,16 @@ class Transformer:
         return self(data, return_copy=True)        
 
 
-    def __rrshift__(self, data: data.Data):
-        return self(data, return_copy=False) 
-    </code></pre>
+    def __rrshift__(self, data: Data):
+        return self(data, return_copy=False)
+    
+
+def make_transformer(
+    transform_item: Optional[Callable] = None
+) -&gt; Callable:
+    def transformer_wrapper(*args, **kwargs) -&gt; Transformer:
+        return Transformer(transform_item=transform_item, *args, **kwargs)
+    return transformer_wrapper</code></pre>
 </details>
 </section>
 <section>
@@ -157,6 +167,26 @@ class Transformer:
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="light_pipe.transformer.make_transformer"><code class="name flex">
+<span>def <span class="ident">make_transformer</span></span>(<span>transform_item: Optional[Callable] = None) ‑> Callable</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_transformer(
+    transform_item: Optional[Callable] = None
+) -&gt; Callable:
+    def transformer_wrapper(*args, **kwargs) -&gt; Transformer:
+        return Transformer(transform_item=transform_item, *args, **kwargs)
+    return transformer_wrapper</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -178,7 +208,7 @@ class Transformer:
     def __init__(
         self, transform_item: Optional[Callable] = None,
         join_fn: Optional[Callable] = None,
-        parallelizer: Optional[parallelizer.Parallelizer] = parallelizer.Parallelizer(),
+        parallelizer: Optional[Parallelizer] = Parallelizer(),
         *args, **kwargs
     ):
         if transform_item is not None:
@@ -196,7 +226,7 @@ class Transformer:
     ) -&gt; Generator:
         if recurse:
             for item in iterable:
-                if isinstance(item, data.Data) or isinstance(item, Iterator):
+                if isinstance(item, Data) or isinstance(item, Iterator):
                     yield from cls.fork(f, item, *args, recurse=recurse, **kwargs)
                 else:
                     yield f, item, args, kwargs
@@ -209,7 +239,7 @@ class Transformer:
     def join(cls, iterable: Iterable, recurse: Optional[bool] = True) -&gt; Generator:
         for item in iterable:
             if recurse and (
-                isinstance(item, data.Data) or isinstance(item, Iterator)
+                isinstance(item, Data) or isinstance(item, Iterator)
             ):
                 yield from cls.join(item, recurse=recurse)
             else:
@@ -219,8 +249,10 @@ class Transformer:
     @staticmethod
     def transform_item(*args, **kwargs):
         raise NotImplementedError(
-            f&#34;Either pass a `Callable` instance to __init__() or overwrite this \
-                method in a subclass of {Transformer.__name__}.&#34;
+            (
+                f&#34;Either pass a `Callable` instance to __init__() or overwrite this &#34;
+                f&#34;method in a subclass of {Transformer.__name__}.&#34;
+            )
         )
 
 
@@ -246,9 +278,9 @@ class Transformer:
 
 
     def transform(
-        self, data: data.Data, *args, return_copy: Optional[bool] = True,
+        self, data: Data, *args, return_copy: Optional[bool] = True,
         block: Optional[bool] = False, **kwargs
-    ) -&gt; data.Data:
+    ) -&gt; Data:
         decorator = self._make_decorator(*args, *self.args, **kwargs, **self.kwargs)
         if return_copy:
             data = data.copy(*args, **kwargs)
@@ -259,15 +291,15 @@ class Transformer:
         return data
 
 
-    def __call__(self, data: data.Data, *args, **kwargs):
+    def __call__(self, data: Data, *args, **kwargs):
         return self.transform(data, *args, **kwargs)
 
 
-    def __ror__(self, data: data.Data):
+    def __ror__(self, data: Data):
         return self(data, return_copy=True)
 
 
-    def __rlshift__(self, data: data.Data):
+    def __rlshift__(self, data: Data):
         &#34;&#34;&#34;
         The left-shift operator is overloaded for symmetry with the right-shift
         operator overloading. Currently 
@@ -283,13 +315,13 @@ class Transformer:
         return self(data, return_copy=True)        
 
 
-    def __rrshift__(self, data: data.Data):
-        return self(data, return_copy=False) </code></pre>
+    def __rrshift__(self, data: Data):
+        return self(data, return_copy=False)</code></pre>
 </details>
 <h3>Static methods</h3>
 <dl>
 <dt id="light_pipe.transformer.Transformer.fork"><code class="name flex">
-<span>def <span class="ident">fork</span></span>(<span>f: Callable, iterable: Iterable[+T_co], *args, recurse: Optional[bool] = True, **kwargs) ‑> Generator[+T_co, -T_contra, +V_co]</span>
+<span>def <span class="ident">fork</span></span>(<span>f: Callable, iterable: Iterable, *args, recurse: Optional[bool] = True, **kwargs) ‑> Generator</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -304,7 +336,7 @@ def fork(
 ) -&gt; Generator:
     if recurse:
         for item in iterable:
-            if isinstance(item, data.Data) or isinstance(item, Iterator):
+            if isinstance(item, Data) or isinstance(item, Iterator):
                 yield from cls.fork(f, item, *args, recurse=recurse, **kwargs)
             else:
                 yield f, item, args, kwargs
@@ -314,7 +346,7 @@ def fork(
 </details>
 </dd>
 <dt id="light_pipe.transformer.Transformer.join"><code class="name flex">
-<span>def <span class="ident">join</span></span>(<span>iterable: Iterable[+T_co], recurse: Optional[bool] = True) ‑> Generator[+T_co, -T_contra, +V_co]</span>
+<span>def <span class="ident">join</span></span>(<span>iterable: Iterable, recurse: Optional[bool] = True) ‑> Generator</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -326,7 +358,7 @@ def fork(
 def join(cls, iterable: Iterable, recurse: Optional[bool] = True) -&gt; Generator:
     for item in iterable:
         if recurse and (
-            isinstance(item, data.Data) or isinstance(item, Iterator)
+            isinstance(item, Data) or isinstance(item, Iterator)
         ):
             yield from cls.join(item, recurse=recurse)
         else:
@@ -345,8 +377,10 @@ def join(cls, iterable: Iterable, recurse: Optional[bool] = True) -&gt; Generato
 <pre><code class="python">@staticmethod
 def transform_item(*args, **kwargs):
     raise NotImplementedError(
-        f&#34;Either pass a `Callable` instance to __init__() or overwrite this \
-            method in a subclass of {Transformer.__name__}.&#34;
+        (
+            f&#34;Either pass a `Callable` instance to __init__() or overwrite this &#34;
+            f&#34;method in a subclass of {Transformer.__name__}.&#34;
+        )
     )</code></pre>
 </details>
 </dd>
@@ -363,9 +397,9 @@ def transform_item(*args, **kwargs):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(
-    self, data: data.Data, *args, return_copy: Optional[bool] = True,
+    self, data: Data, *args, return_copy: Optional[bool] = True,
     block: Optional[bool] = False, **kwargs
-) -&gt; data.Data:
+) -&gt; Data:
     decorator = self._make_decorator(*args, *self.args, **kwargs, **self.kwargs)
     if return_copy:
         data = data.copy(*args, **kwargs)
@@ -390,6 +424,11 @@ def transform_item(*args, **kwargs):
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="light_pipe" href="index.html">light_pipe</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="light_pipe.transformer.make_transformer" href="#light_pipe.transformer.make_transformer">make_transformer</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>

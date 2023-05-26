@@ -25,8 +25,40 @@
 <h1 id="light-pipe"><a href="https://github.com/rcorrero/light-pipe">Light-Pipe</a></h1>
 <hr>
 <h2 id="overview">Overview</h2>
-<p><a href="https://www.light-pipe.io/">Light-Pipe</a> is an extensible, light-weight Python framework for data pipelines that scale. It provides a set of intuitive abstractions designed to decouple pipeline implementation from the operations they perform. It is designed to scale effortlessly, being built from the ground-up to support concurrency in all its forms, and it has zero non-standard dependencies. It's also super fast and efficient, used to perform critical geospatial data processing tasks <a href="https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png">at least an order of magnitude faster than existing systems</a>.</p>
+<p><a href="https://www.light-pipe.io/">Light-Pipe</a> makes data processing pipeline development quick and painless. It is an extensible, light-weight Python framework for data pipelines that scale effortlessly, with zero non-standard dependencies. It abstracts away the implementation details of the pipeline itself, meaning that the developer only has to define the transformations performed within the pipeline on individual units of data.</p>
+<p>Pipelines defined using Light-Pipe scale effortlessly, with native support for all forms of concurrency, allowing for the mixing and matching of asynchronous, multi-threaded, and multi-process operations all within a single pipeline. It's also super fast and efficient, having been used to perform critical geospatial data processing tasks <a href="https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png">at least an order of magnitude faster than existing systems</a>.</p>
 <p>Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause License</a>.</p>
+<h2 id="basic-example">Basic Example</h2>
+<pre><code>&gt;&gt;&gt; from light_pipe import make_data, make_transformer
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_data
+&gt;&gt;&gt; def gen_dicts(x: int):
+&gt;&gt;&gt;     for i in range(x):
+&gt;&gt;&gt;         yield {
+&gt;&gt;&gt;             &quot;one&quot;: 3 * i, 
+&gt;&gt;&gt;             &quot;two&quot;: 3 * i + 1, 
+&gt;&gt;&gt;             &quot;three&quot;: 3 * i + 2
+&gt;&gt;&gt;         }
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_transformer
+&gt;&gt;&gt; def get_third(one: int, two: int, three: int):
+&gt;&gt;&gt;     print(f&quot;Third: {three}&quot;)
+&gt;&gt;&gt;     return three
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; data = gen_dicts(x=3, store_results=True)
+&gt;&gt;&gt; data &gt;&gt; get_third()
+&gt;&gt;&gt; 
+&gt;&gt;&gt; print(data(block=True))
+Third: 2
+Third: 5
+Third: 8
+[2, 5, 8]
+&gt;&gt;&gt;
+&gt;&gt;&gt; print(data(block=True))
+[2, 5, 8]
+</code></pre>
 <h2 id="more-information">More Information</h2>
 <ul>
 <li>
@@ -56,9 +88,45 @@ __doc__ = &#34;&#34;&#34;
 
 ## Overview
 
-[Light-Pipe](https://www.light-pipe.io/) is an extensible, light-weight Python framework for data pipelines that scale. It provides a set of intuitive abstractions designed to decouple pipeline implementation from the operations they perform. It is designed to scale effortlessly, being built from the ground-up to support concurrency in all its forms, and it has zero non-standard dependencies. It&#39;s also super fast and efficient, used to perform critical geospatial data processing tasks [at least an order of magnitude faster than existing systems](https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png).
+[Light-Pipe](https://www.light-pipe.io/) makes data processing pipeline development quick and painless. It is an extensible, light-weight Python framework for data pipelines that scale effortlessly, with zero non-standard dependencies. It abstracts away the implementation details of the pipeline itself, meaning that the developer only has to define the transformations performed within the pipeline on individual units of data.
+
+Pipelines defined using Light-Pipe scale effortlessly, with native support for all forms of concurrency, allowing for the mixing and matching of asynchronous, multi-threaded, and multi-process operations all within a single pipeline. It&#39;s also super fast and efficient, having been used to perform critical geospatial data processing tasks [at least an order of magnitude faster than existing systems](https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png).
 
 Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+
+## Basic Example
+
+```
+&gt;&gt;&gt; from light_pipe import make_data, make_transformer
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_data
+&gt;&gt;&gt; def gen_dicts(x: int):
+&gt;&gt;&gt;     for i in range(x):
+&gt;&gt;&gt;         yield {
+&gt;&gt;&gt;             &#34;one&#34;: 3 * i, 
+&gt;&gt;&gt;             &#34;two&#34;: 3 * i + 1, 
+&gt;&gt;&gt;             &#34;three&#34;: 3 * i + 2
+&gt;&gt;&gt;         }
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_transformer
+&gt;&gt;&gt; def get_third(one: int, two: int, three: int):
+&gt;&gt;&gt;     print(f&#34;Third: {three}&#34;)
+&gt;&gt;&gt;     return three
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; data = gen_dicts(x=3, store_results=True)
+&gt;&gt;&gt; data &gt;&gt; get_third()
+&gt;&gt;&gt; 
+&gt;&gt;&gt; print(data(block=True))
+Third: 2
+Third: 5
+Third: 8
+[2, 5, 8]
+&gt;&gt;&gt;
+&gt;&gt;&gt; print(data(block=True))
+[2, 5, 8]
+```
 
 ## More Information
 
@@ -102,6 +170,7 @@ Copyright 2020-2023 [Richard Correro](https://www.richardcorrero.com/).
 <ul>
 <li><a href="#light-pipe">Light-Pipe</a><ul>
 <li><a href="#overview">Overview</a></li>
+<li><a href="#basic-example">Basic Example</a></li>
 <li><a href="#more-information">More Information</a></li>
 </ul>
 </li>

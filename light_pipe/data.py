@@ -110,4 +110,11 @@ class Data:
         return self._copy(
            *args, generator=generator, store_results=store_results, 
            _results_stored=_results_stored, **kwargs
-        )        
+        )
+
+def make_data(
+    generator: Optional[Union[Callable, Iterable]] = None
+) -> Callable:
+    def data_wrapper(*args, **kwargs) -> Data:
+        return Data(generator=generator, *args, **kwargs)
+    return data_wrapper
