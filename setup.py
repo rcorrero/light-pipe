@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="light-pipe",
-    version="0.3.0",
+    version="0.3.1",
     long_description="""
         Light-Pipe makes data processing pipeline development quick and painless. It is an extensible, light-weight Python framework with zero non-standard dependencies for data pipelines that scale effortlessly. It abstracts away the implementation details of the pipeline itself, meaning that the developer only has to define the transformations performed within the pipeline on individual units of data.
 

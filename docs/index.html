@@ -30,9 +30,8 @@
 <p>Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause License</a>.</p>
 <h2 id="installing-light-pipe">Installing Light-Pipe</h2>
 <pre><code>pip install light-pipe
-
 </code></pre>
-<h2 id="basic-example">Basic Example</h2>
+<h2 id="a-basic-example">A Basic Example</h2>
 <pre><code>&gt;&gt;&gt; from light_pipe import make_data, make_transformer
 &gt;&gt;&gt; 
 &gt;&gt;&gt; 
@@ -62,7 +61,41 @@ Third: 8
 &gt;&gt;&gt;
 &gt;&gt;&gt; print(data(block=True))
 [2, 5, 8]
-
+</code></pre>
+<h2 id="a-slightly-more-interesting-example">A (Slightly) More Interesting Example</h2>
+<pre><code>&gt;&gt;&gt; import asyncio
+&gt;&gt;&gt; import time
+&gt;&gt;&gt; 
+&gt;&gt;&gt; from light_pipe import AsyncGatherer, make_data, make_transformer
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_data
+&gt;&gt;&gt; def gen(x: int):
+&gt;&gt;&gt;     yield from range(x)
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_transformer
+&gt;&gt;&gt; async def add_one(x: int):
+&gt;&gt;&gt;     await asyncio.sleep(1)
+&gt;&gt;&gt;     return x + 1
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; data = gen(x=8)
+&gt;&gt;&gt; 
+&gt;&gt;&gt; t = add_one(parallelizer=AsyncGatherer())
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; for _ in range(10):
+&gt;&gt;&gt;     data &gt;&gt; t
+&gt;&gt;&gt; 
+&gt;&gt;&gt; start = time.time()
+&gt;&gt;&gt; print(data(block=True))
+[12, 10, 14, 11, 16, 15, 13, 17]
+&gt;&gt;&gt; 
+&gt;&gt;&gt; end = time.time()
+&gt;&gt;&gt; diff = end - start
+&gt;&gt;&gt; print(f&quot;Total time to execute tasks: {diff:.1f} seconds.&quot;)
+Total time to execute tasks: 10.0 seconds.
 </code></pre>
 <h2 id="more-information">More Information</h2>
 <ul>
@@ -103,10 +136,9 @@ Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/lic
 
 ```
 pip install light-pipe
-
 ```
 
-## Basic Example
+## A Basic Example
 
 ```
 &gt;&gt;&gt; from light_pipe import make_data, make_transformer
@@ -138,7 +170,44 @@ Third: 8
 &gt;&gt;&gt;
 &gt;&gt;&gt; print(data(block=True))
 [2, 5, 8]
+```
 
+## A (Slightly) More Interesting Example
+
+```
+&gt;&gt;&gt; import asyncio
+&gt;&gt;&gt; import time
+&gt;&gt;&gt; 
+&gt;&gt;&gt; from light_pipe import AsyncGatherer, make_data, make_transformer
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_data
+&gt;&gt;&gt; def gen(x: int):
+&gt;&gt;&gt;     yield from range(x)
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; @make_transformer
+&gt;&gt;&gt; async def add_one(x: int):
+&gt;&gt;&gt;     await asyncio.sleep(1)
+&gt;&gt;&gt;     return x + 1
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; data = gen(x=8)
+&gt;&gt;&gt; 
+&gt;&gt;&gt; t = add_one(parallelizer=AsyncGatherer())
+&gt;&gt;&gt; 
+&gt;&gt;&gt; 
+&gt;&gt;&gt; for _ in range(10):
+&gt;&gt;&gt;     data &gt;&gt; t
+&gt;&gt;&gt; 
+&gt;&gt;&gt; start = time.time()
+&gt;&gt;&gt; print(data(block=True))
+[12, 10, 14, 11, 16, 15, 13, 17]
+&gt;&gt;&gt; 
+&gt;&gt;&gt; end = time.time()
+&gt;&gt;&gt; diff = end - start
+&gt;&gt;&gt; print(f&#34;Total time to execute tasks: {diff:.1f} seconds.&#34;)
+Total time to execute tasks: 10.0 seconds.
 ```
 
 ## More Information
@@ -184,7 +253,8 @@ Copyright 2020-2023 [Richard Correro](https://www.richardcorrero.com/).
 <li><a href="#light-pipe">Light-Pipe</a><ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#installing-light-pipe">Installing Light-Pipe</a></li>
-<li><a href="#basic-example">Basic Example</a></li>
+<li><a href="#a-basic-example">A Basic Example</a></li>
+<li><a href="#a-slightly-more-interesting-example">A (Slightly) More Interesting Example</a></li>
 <li><a href="#more-information">More Information</a></li>
 </ul>
 </li>

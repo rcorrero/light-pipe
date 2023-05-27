@@ -33,7 +33,7 @@ class TestParallelizers(unittest.TestCase):
         queue_size = 3
         p = BlockingThreadPooler(max_workers=max_workers, queue_size=queue_size)        
         for _ in p(iterable=iterable):
-            assert num_tasks_submitted[0] <= queue_size
+            self.assertLessEqual(num_tasks_submitted[0], queue_size)
             num_tasks_submitted[0] -= 1
 
 
@@ -55,7 +55,7 @@ class TestParallelizers(unittest.TestCase):
         queue_size = 3
         p = BlockingProcessPooler(max_workers=max_workers, queue_size=queue_size)        
         for _ in p(iterable=iterable):
-            assert num_tasks_submitted[0] <= queue_size
+            self.assertLessEqual(num_tasks_submitted[0], queue_size)
             num_tasks_submitted[0] -= 1            
         
 

@@ -2,7 +2,8 @@ __author__ = "Richard Correro (richard@richardcorrero.com)"
 
 
 import functools
-from typing import Callable, Generator, Iterable, Iterator, Optional
+from typing import (Callable, Dict, Generator, Iterable, Iterator, List,
+                    Optional, Tuple)
 
 from .data import Data
 from .parallelizer import Parallelizer
@@ -16,12 +17,26 @@ class Transformer:
         self, transform_item: Optional[Callable] = None,
         join_fn: Optional[Callable] = None,
         parallelizer: Optional[Parallelizer] = Parallelizer(),
+        tuple_to_args: Optional[bool] = True, dict_to_kwargs: Optional[bool] = True,
+        num_tries: Optional[int] = 1, raise_after_retries: Optional[bool] = True, 
+        failed_tasks: Optional[List[Tuple[Callable, Tuple, Dict]]] = None,
         *args, **kwargs
     ):
         if transform_item is not None:
             self.transform_item = transform_item
         self.join_fn = join_fn
         self.parallelizer = parallelizer
+        self.tuple_to_args = tuple_to_args
+        self.dict_to_kwargs = dict_to_kwargs
+
+        self.num_tries = num_tries
+
+        if not raise_after_retries and failed_tasks is None:
+            failed_tasks = list()
+
+        self.raise_after_retries = raise_after_retries
+        self.failed_tasks = failed_tasks
+
         self.args = args
         self.kwargs = kwargs
 
@@ -77,6 +92,11 @@ class Transformer:
                             self.transform_item, fn(*wargs, **wkwargs), *args, 
                             recurse=recurse, **kwargs,
                         ),
+                        tuple_to_args=self.tuple_to_args, 
+                        dict_to_kwargs=self.dict_to_kwargs,
+                        num_tries=self.num_tries, 
+                        raise_after_retries=self.raise_after_retries,
+                        failed_tasks=self.failed_tasks
                     ),
                     recurse=recurse
                 )
@@ -127,8 +147,9 @@ class Transformer:
     
 
 def make_transformer(
-    transform_item: Optional[Callable] = None
+    transform_item: Callable
 ) -> Callable:
+    @functools.wraps(transform_item)
     def transformer_wrapper(*args, **kwargs) -> Transformer:
         return Transformer(transform_item=transform_item, *args, **kwargs)
     return transformer_wrapper

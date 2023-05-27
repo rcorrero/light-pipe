@@ -1,6 +1,7 @@
 __author__ = "Richard Correro (richard@richardcorrero.com)"
 
 
+import functools
 from typing import Callable, Iterable, List, Optional, Union
 
 
@@ -112,9 +113,11 @@ class Data:
            _results_stored=_results_stored, **kwargs
         )
 
+
 def make_data(
-    generator: Optional[Union[Callable, Iterable]] = None
+    generator: Union[Callable, Iterable]
 ) -> Callable:
+    @functools.wraps(generator if isinstance(generator, Callable) else None)
     def data_wrapper(*args, **kwargs) -> Data:
         return Data(generator=generator, *args, **kwargs)
     return data_wrapper

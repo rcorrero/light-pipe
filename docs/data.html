@@ -29,6 +29,7 @@
 <pre><code class="python">__author__ = &#34;Richard Correro (richard@richardcorrero.com)&#34;
 
 
+import functools
 from typing import Callable, Iterable, List, Optional, Union
 
 
@@ -140,9 +141,11 @@ class Data:
            _results_stored=_results_stored, **kwargs
         )
 
+
 def make_data(
-    generator: Optional[Union[Callable, Iterable]] = None
+    generator: Union[Callable, Iterable]
 ) -&gt; Callable:
+    @functools.wraps(generator if isinstance(generator, Callable) else None)
     def data_wrapper(*args, **kwargs) -&gt; Data:
         return Data(generator=generator, *args, **kwargs)
     return data_wrapper</code></pre>
@@ -156,7 +159,7 @@ def make_data(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="light_pipe.data.make_data"><code class="name flex">
-<span>def <span class="ident">make_data</span></span>(<span>generator: Union[Callable, Iterable, ForwardRef(None)] = None) ‑> Callable</span>
+<span>def <span class="ident">make_data</span></span>(<span>generator: Union[Callable, Iterable]) ‑> Callable</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -165,8 +168,9 @@ def make_data(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def make_data(
-    generator: Optional[Union[Callable, Iterable]] = None
+    generator: Union[Callable, Iterable]
 ) -&gt; Callable:
+    @functools.wraps(generator if isinstance(generator, Callable) else None)
     def data_wrapper(*args, **kwargs) -&gt; Data:
         return Data(generator=generator, *args, **kwargs)
     return data_wrapper</code></pre>

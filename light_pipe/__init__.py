@@ -22,10 +22,9 @@ Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/lic
 
 ```
 pip install light-pipe
-
 ```
 
-## Basic Example
+## A Basic Example
 
 ```
 >>> from light_pipe import make_data, make_transformer
@@ -57,7 +56,44 @@ Third: 8
 >>>
 >>> print(data(block=True))
 [2, 5, 8]
+```
 
+## A (Slightly) More Interesting Example
+
+```
+>>> import asyncio
+>>> import time
+>>> 
+>>> from light_pipe import AsyncGatherer, make_data, make_transformer
+>>> 
+>>> 
+>>> @make_data
+>>> def gen(x: int):
+>>>     yield from range(x)
+>>> 
+>>> 
+>>> @make_transformer
+>>> async def add_one(x: int):
+>>>     await asyncio.sleep(1)
+>>>     return x + 1
+>>> 
+>>> 
+>>> data = gen(x=8)
+>>> 
+>>> t = add_one(parallelizer=AsyncGatherer())
+>>> 
+>>> 
+>>> for _ in range(10):
+>>>     data >> t
+>>> 
+>>> start = time.time()
+>>> print(data(block=True))
+[12, 10, 14, 11, 16, 15, 13, 17]
+>>> 
+>>> end = time.time()
+>>> diff = end - start
+>>> print(f"Total time to execute tasks: {diff:.1f} seconds.")
+Total time to execute tasks: 10.0 seconds.
 ```
 
 ## More Information

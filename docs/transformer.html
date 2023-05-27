@@ -30,7 +30,8 @@
 
 
 import functools
-from typing import Callable, Generator, Iterable, Iterator, Optional
+from typing import (Callable, Dict, Generator, Iterable, Iterator, List,
+                    Optional, Tuple)
 
 from .data import Data
 from .parallelizer import Parallelizer
@@ -44,12 +45,26 @@ class Transformer:
         self, transform_item: Optional[Callable] = None,
         join_fn: Optional[Callable] = None,
         parallelizer: Optional[Parallelizer] = Parallelizer(),
+        tuple_to_args: Optional[bool] = True, dict_to_kwargs: Optional[bool] = True,
+        num_tries: Optional[int] = 1, raise_after_retries: Optional[bool] = True, 
+        failed_tasks: Optional[List[Tuple[Callable, Tuple, Dict]]] = None,
         *args, **kwargs
     ):
         if transform_item is not None:
             self.transform_item = transform_item
         self.join_fn = join_fn
         self.parallelizer = parallelizer
+        self.tuple_to_args = tuple_to_args
+        self.dict_to_kwargs = dict_to_kwargs
+
+        self.num_tries = num_tries
+
+        if not raise_after_retries and failed_tasks is None:
+            failed_tasks = list()
+
+        self.raise_after_retries = raise_after_retries
+        self.failed_tasks = failed_tasks
+
         self.args = args
         self.kwargs = kwargs
 
@@ -105,6 +120,11 @@ class Transformer:
                             self.transform_item, fn(*wargs, **wkwargs), *args, 
                             recurse=recurse, **kwargs,
                         ),
+                        tuple_to_args=self.tuple_to_args, 
+                        dict_to_kwargs=self.dict_to_kwargs,
+                        num_tries=self.num_tries, 
+                        raise_after_retries=self.raise_after_retries,
+                        failed_tasks=self.failed_tasks
                     ),
                     recurse=recurse
                 )
@@ -155,8 +175,9 @@ class Transformer:
     
 
 def make_transformer(
-    transform_item: Optional[Callable] = None
+    transform_item: Callable
 ) -&gt; Callable:
+    @functools.wraps(transform_item)
     def transformer_wrapper(*args, **kwargs) -&gt; Transformer:
         return Transformer(transform_item=transform_item, *args, **kwargs)
     return transformer_wrapper</code></pre>
@@ -170,7 +191,7 @@ def make_transformer(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="light_pipe.transformer.make_transformer"><code class="name flex">
-<span>def <span class="ident">make_transformer</span></span>(<span>transform_item: Optional[Callable] = None) ‑> Callable</span>
+<span>def <span class="ident">make_transformer</span></span>(<span>transform_item: Callable) ‑> Callable</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -179,8 +200,9 @@ def make_transformer(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def make_transformer(
-    transform_item: Optional[Callable] = None
+    transform_item: Callable
 ) -&gt; Callable:
+    @functools.wraps(transform_item)
     def transformer_wrapper(*args, **kwargs) -&gt; Transformer:
         return Transformer(transform_item=transform_item, *args, **kwargs)
     return transformer_wrapper</code></pre>
@@ -193,7 +215,7 @@ def make_transformer(
 <dl>
 <dt id="light_pipe.transformer.Transformer"><code class="flex name class">
 <span>class <span class="ident">Transformer</span></span>
-<span>(</span><span>transform_item: Optional[Callable] = None, join_fn: Optional[Callable] = None, parallelizer: Optional[<a title="light_pipe.parallelizer.Parallelizer" href="parallelizer.html#light_pipe.parallelizer.Parallelizer">Parallelizer</a>] = &lt;light_pipe.parallelizer.Parallelizer object&gt;, *args, **kwargs)</span>
+<span>(</span><span>transform_item: Optional[Callable] = None, join_fn: Optional[Callable] = None, parallelizer: Optional[<a title="light_pipe.parallelizer.Parallelizer" href="parallelizer.html#light_pipe.parallelizer.Parallelizer">Parallelizer</a>] = &lt;light_pipe.parallelizer.Parallelizer object&gt;, tuple_to_args: Optional[bool] = True, dict_to_kwargs: Optional[bool] = True, num_tries: Optional[int] = 1, raise_after_retries: Optional[bool] = True, failed_tasks: Optional[List[Tuple[Callable, Tuple, Dict]]] = None, *args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -209,12 +231,26 @@ def make_transformer(
         self, transform_item: Optional[Callable] = None,
         join_fn: Optional[Callable] = None,
         parallelizer: Optional[Parallelizer] = Parallelizer(),
+        tuple_to_args: Optional[bool] = True, dict_to_kwargs: Optional[bool] = True,
+        num_tries: Optional[int] = 1, raise_after_retries: Optional[bool] = True, 
+        failed_tasks: Optional[List[Tuple[Callable, Tuple, Dict]]] = None,
         *args, **kwargs
     ):
         if transform_item is not None:
             self.transform_item = transform_item
         self.join_fn = join_fn
         self.parallelizer = parallelizer
+        self.tuple_to_args = tuple_to_args
+        self.dict_to_kwargs = dict_to_kwargs
+
+        self.num_tries = num_tries
+
+        if not raise_after_retries and failed_tasks is None:
+            failed_tasks = list()
+
+        self.raise_after_retries = raise_after_retries
+        self.failed_tasks = failed_tasks
+
         self.args = args
         self.kwargs = kwargs
 
@@ -270,6 +306,11 @@ def make_transformer(
                             self.transform_item, fn(*wargs, **wkwargs), *args, 
                             recurse=recurse, **kwargs,
                         ),
+                        tuple_to_args=self.tuple_to_args, 
+                        dict_to_kwargs=self.dict_to_kwargs,
+                        num_tries=self.num_tries, 
+                        raise_after_retries=self.raise_after_retries,
+                        failed_tasks=self.failed_tasks
                     ),
                     recurse=recurse
                 )
