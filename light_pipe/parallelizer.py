@@ -458,7 +458,7 @@ class AsyncGatherer(Parallelizer):
             q.put(obj)   
 
 
-    def queue_generator(self, q: queue.Queue) -> Generator:
+    def _queue_generator(self, q: queue.Queue) -> Generator:
         while not self._terminate_flag:
             obj: Any = q.get()
             if isinstance(obj, QueueEmptySignal):
@@ -494,5 +494,5 @@ class AsyncGatherer(Parallelizer):
             }
         )
         t.start()
-        yield from self.queue_generator(q=q)
+        yield from self._queue_generator(q=q)
         t.join()
