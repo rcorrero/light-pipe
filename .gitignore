@@ -8,6 +8,4 @@ Light_Pipe.egg-info/
 build/
 dist/
 
-*big_*
 _test*
-ex*
