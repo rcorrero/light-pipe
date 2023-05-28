@@ -12,16 +12,16 @@ __doc__ = """
 
 ## Overview
 
-[Light-Pipe](https://www.light-pipe.io/) makes data processing pipeline development quick and painless. It is an extensible, light-weight Python framework with zero non-standard dependencies for data pipelines that scale effortlessly. It abstracts away the implementation details of the pipeline itself, meaning that the developer only has to define the transformations performed within the pipeline on individual units of data.
+[Light-Pipe](https://www.light-pipe.io/) is a high-level syntax for data pipeline development, designed to make data processing pipeline development quick and painless. It is an extensible, light-weight Python framework with zero non-standard dependencies for data pipelines that scale effortlessly. It abstracts away the implementation details of the pipeline itself, meaning that the developer only has to define the transformations performed within the pipeline on individual units of data.
 
-Pipelines defined using Light-Pipe scale effortlessly, with native support for all forms of concurrency, allowing for the mixing and matching of asynchronous, multi-threaded, and multi-process operations all within a single pipeline. It's also super fast and efficient, having been used to perform critical geospatial data processing tasks [at least an order of magnitude faster than existing systems](https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png).
+Pipelines defined using Light-Pipe scale effortlessly, with native support for all forms of concurrency, allowing for the mixing and matching of asynchronous, multi-threaded, and multi-process operations all within a single pipeline. It's easily extensible for use with distributed processing services such as [Celery](https://docs.celeryq.dev/en/stable/). It's also super fast and efficient, having been used to perform critical geospatial data processing tasks [at least an order of magnitude faster than existing systems](https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png).
 
 Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
 ## Installing Light-Pipe
 
 ```
-pip install light-pipe
+$ pip install light-pipe
 ```
 
 ## A Basic Example
