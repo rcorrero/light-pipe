@@ -29,10 +29,10 @@
 <p>Pipelines defined using Light-Pipe scale effortlessly, with native support for all forms of concurrency, allowing for the mixing and matching of asynchronous, multi-threaded, and multi-process operations all within a single pipeline. It's easily extensible for use with distributed processing services such as <a href="https://docs.celeryq.dev/en/stable/">Celery</a>. It's also super fast and efficient, having been used to perform critical geospatial data processing tasks <a href="https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_geo_tiling.png">at least an order of magnitude faster than existing systems</a>.</p>
 <p>Light-Pipe is released under a <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause License</a>.</p>
 <h2 id="installing-light-pipe">Installing Light-Pipe</h2>
-<pre><code>$ pip install light-pipe
+<pre><code class="language-console">$ pip install light-pipe
 </code></pre>
 <h2 id="a-basic-example">A Basic Example</h2>
-<pre><code>&gt;&gt;&gt; from light_pipe import make_data, make_transformer
+<pre><code class="language-python">&gt;&gt;&gt; from light_pipe import make_data, make_transformer
 &gt;&gt;&gt; 
 &gt;&gt;&gt; 
 &gt;&gt;&gt; @make_data
@@ -63,7 +63,7 @@ Third: 8
 [2, 5, 8]
 </code></pre>
 <h2 id="a-slightly-more-interesting-example">A (Slightly) More Interesting Example</h2>
-<pre><code>&gt;&gt;&gt; import asyncio
+<pre><code class="language-python">&gt;&gt;&gt; import asyncio
 &gt;&gt;&gt; import time
 &gt;&gt;&gt; 
 &gt;&gt;&gt; from light_pipe import AsyncGatherer, make_data, make_transformer
@@ -134,13 +134,13 @@ Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/lic
 
 ## Installing Light-Pipe
 
-```
+```console
 $ pip install light-pipe
 ```
 
 ## A Basic Example
 
-```
+```python
 &gt;&gt;&gt; from light_pipe import make_data, make_transformer
 &gt;&gt;&gt; 
 &gt;&gt;&gt; 
@@ -174,7 +174,7 @@ Third: 8
 
 ## A (Slightly) More Interesting Example
 
-```
+```python
 &gt;&gt;&gt; import asyncio
 &gt;&gt;&gt; import time
 &gt;&gt;&gt; 

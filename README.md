@@ -12,13 +12,13 @@ Light-Pipe is released under a [BSD-3-Clause License](https://opensource.org/lic
 
 ## Installing Light-Pipe
 
-```
+```console
 $ pip install light-pipe
 ```
 
 ## A Basic Example
 
-```
+```python
 >>> from light_pipe import make_data, make_transformer
 >>> 
 >>> 
@@ -52,7 +52,7 @@ Third: 8
 
 ## A (Slightly) More Interesting Example
 
-```
+```python
 >>> import asyncio
 >>> import time
 >>> 
