@@ -34,7 +34,7 @@ Below is a chart displaying the runtime (in seconds) for both Light-Pipe and `so
 
 > [_Comparison of Runtimes When Using Pixel Coordinates_](https://github.com/rcorrero/light-pipe/blob/depth_first/data/plots/test_pixel_tiling.png)
 
-[Here](https://github.com/rcorrero/light-pipe/blob/depth_first/data/tests/test_results/test_pixel_tiling.json) are the recorded runtimes. These results were generated using [this script](https://github.com/rcorrero/light-pipe/blob/depth_first/tests/test_pixel_tiling.py), which you should test out yourself so that you don't have to take my word for it. These results were obtained on my local machine, which has an AMD Ryzen 5 2600 processor with 16 GB of DDR4 SDRAM and an SDD. Multiple trials were conducted for each method, and the order in which the trials were conducted was randomly-chosen.
+[Here](https://github.com/rcorrero/light-pipe/blob/depth_first/data/tests/test_results/test_pixel_tiling.json) are the recorded runtimes. These results were generated using [this script](https://github.com/rcorrero/light-pipe/blob/htdl/tests/test_pixel_tiling.py), which you should test out yourself so that you don't have to take my word for it. These results were obtained on my local machine, which has an AMD Ryzen 5 2600 processor with 16 GB of DDR4 SDRAM and an SDD. Multiple trials were conducted for each method, and the order in which the trials were conducted was randomly-chosen.
 
 Next, I tested the performance of the three methods when extracting sub-regions specified in _geographic coordinates_:
 
