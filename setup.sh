@@ -9,7 +9,7 @@ python3 -m pip install --upgrade pip
 
 ### Make docs ###
 python3 -m pip install --upgrade pdoc3
-pdoc ${SRCNAME} -o ./docs/ --html --force
+pdoc ${SRCNAME} -o ./docs/ --pdf --force
 mv ./docs/${SRCNAME}/* ./docs/
 rm -r ./docs/${SRCNAME}
 

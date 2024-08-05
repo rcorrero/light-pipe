@@ -104,5 +104,5 @@ Total time to execute tasks: 10.0 seconds.
 
 ---
 
-Copyright 2020-2023 [Richard Correro](https://www.richardcorrero.com/).
+Copyright 2020-Present [Richard Correro](https://www.richardcorrero.com/).
 """
